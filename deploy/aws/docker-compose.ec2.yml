@@ -17,7 +17,8 @@ services:
       - "443:443"
       - "443:443/udp"
     environment:
-      DOMAIN: ${DOMAIN:?Set DOMAIN for HTTPS, e.g. app.example.com}
+      # Optional at compose parse time; deploy.sh requires DOMAIN for `https` profile.
+      DOMAIN: ${DOMAIN:-}
     volumes:
       - ./deploy/aws/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
