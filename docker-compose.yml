@@ -1,0 +1,44 @@
+# Local production-like stack (also used on AWS EC2 — see README)
+services:
+  api:
+    build:
+      context: ./api
+    env_file:
+      - ./api/.env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3001
+      DATABASE_PATH: /data/vetfin.sqlite
+    volumes:
+      - vetfin-data:/data
+    expose:
+      - "3001"
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  web:
+    build:
+      context: ./web
+      args:
+        VITE_API_URL: ""
+    ports:
+      - "${HTTP_PORT:-80}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  vetfin-data:

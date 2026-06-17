@@ -1,0 +1,80 @@
+main {
+  overflow-x: hidden;
+}
+
+.section {
+  padding: 5rem 1.5rem;
+}
+
+.section--alt {
+  background: var(--color-white);
+}
+
+.section-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+.section-label {
+  display: inline-block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-teal);
+  margin-bottom: 0.75rem;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-ink);
+  margin: 0 0 1rem;
+}
+
+.section-lead {
+  font-size: 1.125rem;
+  color: var(--color-ink-muted);
+  max-width: 36rem;
+  margin: 0 0 2.5rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn--primary {
+  background: var(--color-teal);
+  color: var(--color-white);
+  box-shadow: 0 4px 14px rgba(29, 107, 92, 0.35);
+}
+
+.btn--primary:hover {
+  background: var(--color-teal-light);
+}
+
+.btn--secondary {
+  background: var(--color-white);
+  color: var(--color-teal);
+  border: 2px solid var(--color-border);
+}
+
+.btn--secondary:hover {
+  border-color: var(--color-teal);
+  background: var(--color-cream);
+}

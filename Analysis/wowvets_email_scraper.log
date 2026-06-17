@@ -1,0 +1,625 @@
+2026-06-04 15:19:58,663 INFO Loaded 34345 rows, checkpoint has 30 entries
+2026-06-04 15:19:58,798 INFO Need to scrape 27340 websites
+2026-06-04 15:19:59,269 WARNING Row 47 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:19:59,458 WARNING Row 51 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:19:59,475 WARNING Row 40 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:19:59,914 WARNING Row 50 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:00,087 WARNING Row 43 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:00,449 WARNING Row 64 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:01,691 WARNING Row 60 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:02,101 WARNING Row 70 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:02,154 WARNING Row 52 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:02,467 WARNING Row 71 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:03,050 WARNING Row 49 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:03,355 WARNING Row 58 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:03,645 WARNING Row 81 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:04,684 WARNING Row 69 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:05,224 WARNING Row 85 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:05,625 WARNING Row 83 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:05,682 WARNING Row 74 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:06,777 WARNING Row 86 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:06,884 WARNING Row 87 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:06,919 WARNING Row 82 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:07,243 WARNING Row 88 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:08,359 WARNING Row 90 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:08,730 WARNING Row 94 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:08,853 WARNING Row 97 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:09,168 WARNING Row 98 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:10,072 INFO Progress 50/27340 | scraped=25 emails_found=0
+2026-06-04 15:20:10,164 WARNING Row 95 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:12,614 WARNING Row 106 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:12,822 WARNING Row 92 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:12,840 WARNING Row 115 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:13,199 WARNING Row 107 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:13,353 WARNING Row 120 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:14,087 WARNING Row 125 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:14,214 WARNING Row 128 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:15,355 WARNING Row 118 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:18,446 WARNING Row 127 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:18,891 WARNING Row 147 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:19,055 WARNING Row 156 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:19,072 WARNING Row 157 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:19,458 WARNING Row 146 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:19,574 WARNING Row 148 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:19,736 WARNING Row 161 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:19,978 WARNING Row 159 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:20,189 INFO Progress 100/27340 | scraped=58 emails_found=0
+2026-06-04 15:20:20,432 WARNING Row 139 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:21,934 WARNING Row 169 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:25,099 WARNING Row 174 failed: '>=' not supported between instances of 'tuple' and 'int'
+2026-06-04 15:20:49,676 INFO Loaded 34345 rows, checkpoint has 16 entries
+2026-06-04 15:20:49,822 INFO Need to scrape 27354 websites
+2026-06-04 15:20:56,447 INFO Progress 50/27354 | scraped=50 emails_found=13
+2026-06-04 15:21:07,120 INFO Progress 100/27354 | scraped=100 emails_found=30
+2026-06-04 15:21:20,875 INFO Progress 150/27354 | scraped=150 emails_found=55
+2026-06-04 15:21:26,644 INFO Progress 200/27354 | scraped=200 emails_found=76
+2026-06-04 15:21:46,978 INFO Progress 250/27354 | scraped=250 emails_found=98
+2026-06-04 15:22:02,935 INFO Progress 300/27354 | scraped=300 emails_found=127
+2026-06-04 15:22:11,757 INFO Progress 350/27354 | scraped=350 emails_found=152
+2026-06-04 15:22:23,007 INFO Progress 400/27354 | scraped=400 emails_found=174
+2026-06-04 15:22:36,669 INFO Progress 450/27354 | scraped=450 emails_found=195
+2026-06-04 15:22:50,487 INFO Progress 500/27354 | scraped=500 emails_found=219
+2026-06-04 15:23:04,807 INFO Progress 550/27354 | scraped=550 emails_found=240
+2026-06-04 15:23:14,183 INFO Progress 600/27354 | scraped=600 emails_found=261
+2026-06-04 15:23:24,611 INFO Progress 650/27354 | scraped=650 emails_found=282
+2026-06-04 15:23:32,681 INFO Progress 700/27354 | scraped=700 emails_found=305
+2026-06-04 15:23:45,811 INFO Progress 750/27354 | scraped=750 emails_found=334
+2026-06-04 15:23:54,936 INFO Progress 800/27354 | scraped=800 emails_found=362
+2026-06-04 15:24:10,010 INFO Progress 850/27354 | scraped=850 emails_found=392
+2026-06-04 15:24:20,261 INFO Progress 900/27354 | scraped=900 emails_found=409
+2026-06-04 15:24:28,760 INFO Progress 950/27354 | scraped=950 emails_found=433
+/home/werner/Documents/VetFin/Analysis/wowvets_email_scraper.py:136: XMLParsedAsHTMLWarning: It looks like you're using an HTML parser to parse an XML document.
+
+Assuming this really is an XML document, what you're doing might work, but you should know that using an XML parser will be more reliable. To parse this document as XML, make sure you have the Python package 'lxml' installed, and pass the keyword argument `features="xml"` into the BeautifulSoup constructor.
+
+If you want or need to use an HTML parser on this document, you can make this warning go away by filtering it. To do that, run this code before calling the BeautifulSoup constructor:
+
+    from bs4 import XMLParsedAsHTMLWarning
+    import warnings
+
+    warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
+
+  soup = BeautifulSoup(html[:MAX_PAGE_BYTES], "lxml")
+2026-06-04 15:24:37,902 INFO Progress 1000/27354 | scraped=1000 emails_found=454
+2026-06-04 15:24:50,721 INFO Progress 1050/27354 | scraped=1050 emails_found=477
+2026-06-04 15:25:08,572 INFO Progress 1100/27354 | scraped=1100 emails_found=495
+2026-06-04 15:25:25,922 INFO Progress 1150/27354 | scraped=1150 emails_found=521
+2026-06-04 15:25:37,174 INFO Progress 1200/27354 | scraped=1200 emails_found=538
+2026-06-04 15:25:48,967 INFO Progress 1250/27354 | scraped=1250 emails_found=563
+2026-06-04 15:25:56,534 INFO Progress 1300/27354 | scraped=1300 emails_found=579
+2026-06-04 15:26:05,029 INFO Progress 1350/27354 | scraped=1350 emails_found=600
+2026-06-04 15:26:15,254 INFO Progress 1400/27354 | scraped=1400 emails_found=620
+2026-06-04 15:26:29,596 INFO Progress 1450/27354 | scraped=1450 emails_found=641
+2026-06-04 15:26:43,374 INFO Progress 1500/27354 | scraped=1500 emails_found=663
+2026-06-04 15:26:58,416 INFO Progress 1550/27354 | scraped=1550 emails_found=685
+2026-06-04 15:27:08,850 INFO Progress 1600/27354 | scraped=1600 emails_found=706
+2026-06-04 15:27:20,504 INFO Progress 1650/27354 | scraped=1650 emails_found=728
+2026-06-04 15:27:39,260 INFO Progress 1700/27354 | scraped=1700 emails_found=746
+2026-06-04 15:27:50,848 INFO Progress 1750/27354 | scraped=1750 emails_found=764
+2026-06-04 15:28:01,328 INFO Progress 1800/27354 | scraped=1800 emails_found=787
+2026-06-04 15:28:10,198 INFO Progress 1850/27354 | scraped=1850 emails_found=802
+2026-06-04 15:28:20,009 INFO Progress 1900/27354 | scraped=1900 emails_found=822
+2026-06-04 15:28:32,491 INFO Progress 1950/27354 | scraped=1950 emails_found=843
+2026-06-04 15:28:44,503 INFO Progress 2000/27354 | scraped=2000 emails_found=868
+2026-06-04 15:56:57,220 INFO Loaded 34345 rows, checkpoint has 1509 entries
+2026-06-04 15:56:57,321 INFO Need to scrape 25861 websites
+2026-06-04 15:57:10,406 INFO Progress 50/25861 | scraped=50 emails_found=22
+2026-06-04 15:57:20,682 INFO Progress 100/25861 | scraped=100 emails_found=44
+2026-06-04 15:57:29,589 INFO Progress 150/25861 | scraped=150 emails_found=66
+2026-06-04 15:57:46,709 INFO Progress 200/25861 | scraped=200 emails_found=82
+2026-06-04 15:57:59,577 INFO Progress 250/25861 | scraped=250 emails_found=102
+2026-06-04 15:58:09,311 INFO Progress 300/25861 | scraped=300 emails_found=126
+2026-06-04 15:58:17,627 INFO Progress 350/25861 | scraped=350 emails_found=140
+2026-06-04 15:58:29,857 INFO Progress 400/25861 | scraped=400 emails_found=160
+2026-06-04 15:58:42,346 INFO Progress 450/25861 | scraped=450 emails_found=185
+2026-06-04 15:58:51,558 INFO Progress 500/25861 | scraped=500 emails_found=206
+2026-06-04 15:59:03,590 INFO Progress 550/25861 | scraped=550 emails_found=229
+2026-06-04 15:59:14,455 INFO Progress 600/25861 | scraped=600 emails_found=252
+2026-06-04 15:59:27,892 INFO Progress 650/25861 | scraped=650 emails_found=270
+2026-06-04 15:59:43,902 INFO Progress 700/25861 | scraped=700 emails_found=288
+2026-06-04 15:59:57,284 INFO Progress 750/25861 | scraped=750 emails_found=311
+2026-06-04 16:00:12,726 INFO Progress 800/25861 | scraped=800 emails_found=333
+2026-06-04 16:00:21,674 INFO Progress 850/25861 | scraped=850 emails_found=355
+2026-06-04 16:00:31,826 INFO Progress 900/25861 | scraped=900 emails_found=380
+2026-06-04 16:00:41,541 INFO Progress 950/25861 | scraped=950 emails_found=404
+2026-06-04 16:00:52,944 INFO Progress 1000/25861 | scraped=1000 emails_found=422
+2026-06-04 16:01:04,129 INFO Progress 1050/25861 | scraped=1050 emails_found=445
+2026-06-04 16:01:25,360 INFO Progress 1100/25861 | scraped=1100 emails_found=465
+2026-06-04 16:01:34,713 INFO Progress 1150/25861 | scraped=1150 emails_found=479
+2026-06-04 16:01:50,861 INFO Progress 1200/25861 | scraped=1200 emails_found=503
+2026-06-04 16:01:59,618 INFO Progress 1250/25861 | scraped=1250 emails_found=529
+2026-06-04 16:02:11,860 INFO Progress 1300/25861 | scraped=1300 emails_found=545
+2026-06-04 16:02:25,332 INFO Progress 1350/25861 | scraped=1350 emails_found=564
+2026-06-04 16:02:35,240 INFO Progress 1400/25861 | scraped=1400 emails_found=583
+2026-06-04 16:02:46,062 INFO Progress 1450/25861 | scraped=1450 emails_found=607
+2026-06-04 16:02:57,249 INFO Progress 1500/25861 | scraped=1500 emails_found=618
+2026-06-04 16:03:09,050 INFO Progress 1550/25861 | scraped=1550 emails_found=635
+2026-06-04 16:03:20,284 INFO Progress 1600/25861 | scraped=1600 emails_found=660
+2026-06-04 16:03:31,738 INFO Progress 1650/25861 | scraped=1650 emails_found=686
+2026-06-04 16:03:45,410 INFO Progress 1700/25861 | scraped=1700 emails_found=708
+2026-06-04 16:03:58,312 INFO Progress 1750/25861 | scraped=1750 emails_found=728
+2026-06-04 16:04:09,879 INFO Progress 1800/25861 | scraped=1800 emails_found=756
+2026-06-04 16:37:26,161 INFO Loaded 34345 rows, checkpoint has 3309 entries
+2026-06-04 16:37:26,246 INFO Need to scrape 24061 websites
+2026-06-04 16:37:39,445 INFO Progress 50/24061 | scraped=50 emails_found=16
+2026-06-04 16:37:50,248 INFO Progress 100/24061 | scraped=100 emails_found=43
+2026-06-04 16:37:58,028 INFO Progress 150/24061 | scraped=150 emails_found=63
+2026-06-04 16:38:13,058 INFO Progress 200/24061 | scraped=200 emails_found=84
+2026-06-04 16:38:20,449 INFO Progress 250/24061 | scraped=250 emails_found=104
+2026-06-04 16:38:33,494 INFO Progress 300/24061 | scraped=300 emails_found=122
+2026-06-04 16:38:43,803 INFO Progress 350/24061 | scraped=350 emails_found=144
+2026-06-04 16:38:53,206 INFO Progress 400/24061 | scraped=400 emails_found=162
+2026-06-04 16:39:07,760 INFO Progress 450/24061 | scraped=450 emails_found=187
+2026-06-04 16:39:14,902 INFO Progress 500/24061 | scraped=500 emails_found=207
+2026-06-04 16:39:22,906 INFO Progress 550/24061 | scraped=550 emails_found=227
+2026-06-04 16:39:36,726 INFO Progress 600/24061 | scraped=600 emails_found=242
+2026-06-04 16:39:47,518 INFO Progress 650/24061 | scraped=650 emails_found=263
+2026-06-04 16:39:57,194 INFO Progress 700/24061 | scraped=700 emails_found=284
+2026-06-04 16:40:07,948 INFO Progress 750/24061 | scraped=750 emails_found=302
+2026-06-04 16:40:19,476 INFO Progress 800/24061 | scraped=800 emails_found=325
+2026-06-04 16:40:29,290 INFO Progress 850/24061 | scraped=850 emails_found=350
+2026-06-04 16:40:36,771 INFO Progress 900/24061 | scraped=900 emails_found=367
+2026-06-04 16:40:52,203 INFO Progress 950/24061 | scraped=950 emails_found=387
+2026-06-04 16:41:04,987 INFO Progress 1000/24061 | scraped=1000 emails_found=408
+2026-06-04 16:41:21,544 INFO Progress 1050/24061 | scraped=1050 emails_found=425
+2026-06-04 16:41:31,847 INFO Progress 1100/24061 | scraped=1100 emails_found=446
+2026-06-04 16:41:42,492 INFO Progress 1150/24061 | scraped=1150 emails_found=464
+2026-06-04 16:41:53,589 INFO Progress 1200/24061 | scraped=1200 emails_found=480
+2026-06-04 16:42:04,556 INFO Progress 1250/24061 | scraped=1250 emails_found=497
+2026-06-04 16:42:14,002 INFO Progress 1300/24061 | scraped=1300 emails_found=518
+2026-06-04 16:42:28,562 INFO Progress 1350/24061 | scraped=1350 emails_found=538
+2026-06-04 16:42:41,913 INFO Progress 1400/24061 | scraped=1400 emails_found=558
+2026-06-04 16:42:54,352 INFO Progress 1450/24061 | scraped=1450 emails_found=577
+2026-06-04 16:43:07,200 INFO Progress 1500/24061 | scraped=1500 emails_found=599
+2026-06-04 16:43:25,889 INFO Progress 1550/24061 | scraped=1550 emails_found=622
+2026-06-04 16:43:43,400 INFO Progress 1600/24061 | scraped=1600 emails_found=644
+2026-06-04 16:43:51,735 INFO Progress 1650/24061 | scraped=1650 emails_found=663
+2026-06-04 16:44:02,025 INFO Progress 1700/24061 | scraped=1700 emails_found=691
+2026-06-04 16:44:17,561 INFO Progress 1750/24061 | scraped=1750 emails_found=705
+2026-06-04 16:44:33,169 INFO Progress 1800/24061 | scraped=1800 emails_found=727
+2026-06-04 16:44:43,652 INFO Progress 1850/24061 | scraped=1850 emails_found=748
+2026-06-04 16:44:54,076 INFO Progress 1900/24061 | scraped=1900 emails_found=770
+2026-06-04 16:45:05,969 INFO Progress 1950/24061 | scraped=1950 emails_found=793
+2026-06-04 16:45:20,678 INFO Progress 2000/24061 | scraped=2000 emails_found=812
+2026-06-04 16:45:32,953 INFO Progress 2050/24061 | scraped=2050 emails_found=834
+2026-06-04 16:45:47,636 INFO Progress 2100/24061 | scraped=2100 emails_found=852
+2026-06-04 16:46:01,150 INFO Progress 2150/24061 | scraped=2150 emails_found=869
+2026-06-04 16:46:19,882 INFO Progress 2200/24061 | scraped=2200 emails_found=883
+2026-06-04 16:46:30,380 INFO Progress 2250/24061 | scraped=2250 emails_found=902
+2026-06-04 16:46:46,525 INFO Progress 2300/24061 | scraped=2300 emails_found=925
+2026-06-04 16:47:07,156 INFO Progress 2350/24061 | scraped=2350 emails_found=944
+2026-06-04 16:47:20,703 INFO Progress 2400/24061 | scraped=2400 emails_found=964
+2026-06-04 16:47:37,322 INFO Progress 2450/24061 | scraped=2450 emails_found=984
+2026-06-04 16:47:47,084 INFO Progress 2500/24061 | scraped=2500 emails_found=1006
+2026-06-04 16:48:00,334 INFO Progress 2550/24061 | scraped=2550 emails_found=1024
+2026-06-04 16:48:14,679 INFO Progress 2600/24061 | scraped=2600 emails_found=1046
+2026-06-04 16:48:38,327 INFO Progress 2650/24061 | scraped=2650 emails_found=1071
+2026-06-04 16:48:47,220 INFO Progress 2700/24061 | scraped=2700 emails_found=1090
+2026-06-04 16:48:59,455 INFO Progress 2750/24061 | scraped=2750 emails_found=1110
+2026-06-04 16:49:09,449 INFO Progress 2800/24061 | scraped=2800 emails_found=1130
+2026-06-04 16:49:18,470 INFO Progress 2850/24061 | scraped=2850 emails_found=1147
+2026-06-04 16:49:30,770 INFO Progress 2900/24061 | scraped=2900 emails_found=1173
+2026-06-04 16:49:41,118 INFO Progress 2950/24061 | scraped=2950 emails_found=1199
+2026-06-04 16:49:52,559 INFO Progress 3000/24061 | scraped=3000 emails_found=1212
+2026-06-04 16:50:07,551 INFO Progress 3050/24061 | scraped=3050 emails_found=1240
+2026-06-04 16:50:19,109 INFO Progress 3100/24061 | scraped=3100 emails_found=1256
+2026-06-04 16:50:34,482 INFO Progress 3150/24061 | scraped=3150 emails_found=1274
+2026-06-04 16:50:47,967 INFO Progress 3200/24061 | scraped=3200 emails_found=1292
+2026-06-04 16:51:02,006 INFO Progress 3250/24061 | scraped=3250 emails_found=1315
+2026-06-04 16:51:11,501 INFO Progress 3300/24061 | scraped=3300 emails_found=1340
+2026-06-04 16:51:27,172 INFO Progress 3350/24061 | scraped=3350 emails_found=1363
+2026-06-04 16:51:36,134 INFO Progress 3400/24061 | scraped=3400 emails_found=1390
+2026-06-04 16:51:47,232 INFO Progress 3450/24061 | scraped=3450 emails_found=1408
+2026-06-04 16:52:03,817 INFO Progress 3500/24061 | scraped=3500 emails_found=1432
+2026-06-04 16:52:15,687 INFO Progress 3550/24061 | scraped=3550 emails_found=1448
+2026-06-04 16:52:26,562 INFO Progress 3600/24061 | scraped=3600 emails_found=1476
+2026-06-04 16:52:46,731 INFO Progress 3650/24061 | scraped=3650 emails_found=1498
+2026-06-04 16:52:59,528 INFO Progress 3700/24061 | scraped=3700 emails_found=1525
+2026-06-04 16:53:13,520 INFO Progress 3750/24061 | scraped=3750 emails_found=1542
+2026-06-04 16:53:23,590 INFO Progress 3800/24061 | scraped=3800 emails_found=1562
+2026-06-04 16:53:36,184 INFO Progress 3850/24061 | scraped=3850 emails_found=1577
+2026-06-04 16:53:44,141 INFO Progress 3900/24061 | scraped=3900 emails_found=1599
+2026-06-04 16:53:55,514 INFO Progress 3950/24061 | scraped=3950 emails_found=1620
+2026-06-04 16:54:09,648 INFO Progress 4000/24061 | scraped=4000 emails_found=1636
+2026-06-04 16:54:19,701 INFO Progress 4050/24061 | scraped=4050 emails_found=1651
+2026-06-04 16:54:33,012 INFO Progress 4100/24061 | scraped=4100 emails_found=1677
+2026-06-04 16:54:44,063 INFO Progress 4150/24061 | scraped=4150 emails_found=1706
+2026-06-04 16:54:58,930 INFO Progress 4200/24061 | scraped=4200 emails_found=1733
+2026-06-04 16:55:11,225 INFO Progress 4250/24061 | scraped=4250 emails_found=1751
+2026-06-04 16:55:23,754 INFO Progress 4300/24061 | scraped=4300 emails_found=1764
+2026-06-04 16:55:38,782 INFO Progress 4350/24061 | scraped=4350 emails_found=1779
+2026-06-04 16:55:48,781 INFO Progress 4400/24061 | scraped=4400 emails_found=1800
+2026-06-04 16:55:59,327 INFO Progress 4450/24061 | scraped=4450 emails_found=1819
+2026-06-04 16:56:13,337 INFO Progress 4500/24061 | scraped=4500 emails_found=1833
+2026-06-04 16:56:28,166 INFO Progress 4550/24061 | scraped=4550 emails_found=1856
+2026-06-04 16:56:49,299 INFO Progress 4600/24061 | scraped=4600 emails_found=1872
+2026-06-04 16:57:01,835 INFO Progress 4650/24061 | scraped=4650 emails_found=1900
+2026-06-04 16:57:16,385 INFO Progress 4700/24061 | scraped=4700 emails_found=1921
+2026-06-04 16:57:28,551 INFO Progress 4750/24061 | scraped=4750 emails_found=1939
+2026-06-04 16:57:38,792 INFO Progress 4800/24061 | scraped=4800 emails_found=1953
+2026-06-04 16:57:49,788 INFO Progress 4850/24061 | scraped=4850 emails_found=1978
+2026-06-04 16:58:06,052 INFO Progress 4900/24061 | scraped=4900 emails_found=2000
+2026-06-04 16:58:18,371 INFO Progress 4950/24061 | scraped=4950 emails_found=2016
+2026-06-04 16:58:37,411 INFO Progress 5000/24061 | scraped=5000 emails_found=2041
+2026-06-04 16:58:52,800 INFO Progress 5050/24061 | scraped=5050 emails_found=2066
+2026-06-04 16:59:04,568 INFO Progress 5100/24061 | scraped=5100 emails_found=2092
+2026-06-04 16:59:15,231 INFO Progress 5150/24061 | scraped=5150 emails_found=2112
+2026-06-04 16:59:28,000 INFO Progress 5200/24061 | scraped=5200 emails_found=2132
+2026-06-04 16:59:42,837 INFO Progress 5250/24061 | scraped=5250 emails_found=2156
+2026-06-04 16:59:59,923 INFO Progress 5300/24061 | scraped=5300 emails_found=2184
+2026-06-04 17:00:10,951 INFO Progress 5350/24061 | scraped=5350 emails_found=2205
+2026-06-04 17:00:22,436 INFO Progress 5400/24061 | scraped=5400 emails_found=2232
+2026-06-04 17:00:35,123 INFO Progress 5450/24061 | scraped=5450 emails_found=2259
+2026-06-04 17:00:45,808 INFO Progress 5500/24061 | scraped=5500 emails_found=2282
+2026-06-04 17:00:56,332 INFO Progress 5550/24061 | scraped=5550 emails_found=2301
+2026-06-04 17:01:10,662 INFO Progress 5600/24061 | scraped=5600 emails_found=2324
+2026-06-04 17:01:27,268 INFO Progress 5650/24061 | scraped=5650 emails_found=2347
+2026-06-04 17:01:40,511 INFO Progress 5700/24061 | scraped=5700 emails_found=2371
+2026-06-04 17:01:54,186 INFO Progress 5750/24061 | scraped=5750 emails_found=2390
+2026-06-04 17:02:05,729 INFO Progress 5800/24061 | scraped=5800 emails_found=2412
+2026-06-04 17:02:18,478 INFO Progress 5850/24061 | scraped=5850 emails_found=2442
+2026-06-04 17:02:35,418 INFO Progress 5900/24061 | scraped=5900 emails_found=2467
+2026-06-04 17:02:50,365 INFO Progress 5950/24061 | scraped=5950 emails_found=2483
+2026-06-04 17:03:04,302 INFO Progress 6000/24061 | scraped=6000 emails_found=2501
+2026-06-04 17:03:18,892 INFO Progress 6050/24061 | scraped=6050 emails_found=2516
+2026-06-04 17:03:30,517 INFO Progress 6100/24061 | scraped=6100 emails_found=2545
+2026-06-04 17:03:43,513 INFO Progress 6150/24061 | scraped=6150 emails_found=2573
+2026-06-04 17:04:04,075 INFO Progress 6200/24061 | scraped=6200 emails_found=2594
+2026-06-04 17:04:17,250 INFO Progress 6250/24061 | scraped=6250 emails_found=2618
+2026-06-04 17:04:28,410 INFO Progress 6300/24061 | scraped=6300 emails_found=2645
+2026-06-04 17:04:42,910 INFO Progress 6350/24061 | scraped=6350 emails_found=2670
+2026-06-04 17:04:52,658 INFO Progress 6400/24061 | scraped=6400 emails_found=2693
+2026-06-04 17:05:02,852 INFO Progress 6450/24061 | scraped=6450 emails_found=2721
+2026-06-04 17:05:16,783 INFO Progress 6500/24061 | scraped=6500 emails_found=2750
+2026-06-04 17:05:30,241 INFO Progress 6550/24061 | scraped=6550 emails_found=2774
+2026-06-04 17:05:51,728 INFO Progress 6600/24061 | scraped=6600 emails_found=2794
+2026-06-04 17:06:03,396 INFO Progress 6650/24061 | scraped=6650 emails_found=2816
+2026-06-04 17:06:17,865 INFO Progress 6700/24061 | scraped=6700 emails_found=2839
+2026-06-04 17:06:28,024 INFO Progress 6750/24061 | scraped=6750 emails_found=2866
+2026-06-04 17:06:43,354 INFO Progress 6800/24061 | scraped=6800 emails_found=2895
+2026-06-04 17:07:03,173 INFO Progress 6850/24061 | scraped=6850 emails_found=2916
+2026-06-04 17:07:33,563 INFO Progress 6900/24061 | scraped=6900 emails_found=2941
+2026-06-04 17:07:48,469 INFO Progress 6950/24061 | scraped=6950 emails_found=2966
+2026-06-04 17:08:08,235 INFO Progress 7000/24061 | scraped=7000 emails_found=2995
+2026-06-04 17:08:19,173 INFO Progress 7050/24061 | scraped=7050 emails_found=3018
+2026-06-04 17:08:31,963 INFO Progress 7100/24061 | scraped=7100 emails_found=3043
+2026-06-04 17:08:49,801 INFO Progress 7150/24061 | scraped=7150 emails_found=3066
+2026-06-04 17:09:12,629 INFO Progress 7200/24061 | scraped=7200 emails_found=3091
+2026-06-04 17:09:21,636 INFO Progress 7250/24061 | scraped=7250 emails_found=3112
+2026-06-04 17:09:33,668 INFO Progress 7300/24061 | scraped=7300 emails_found=3135
+2026-06-04 17:09:50,753 INFO Progress 7350/24061 | scraped=7350 emails_found=3156
+2026-06-04 17:09:59,544 INFO Progress 7400/24061 | scraped=7400 emails_found=3183
+2026-06-04 17:10:11,999 INFO Progress 7450/24061 | scraped=7450 emails_found=3199
+2026-06-04 17:10:23,428 INFO Progress 7500/24061 | scraped=7500 emails_found=3220
+2026-06-04 17:10:35,617 INFO Progress 7550/24061 | scraped=7550 emails_found=3247
+2026-06-04 17:10:50,162 INFO Progress 7600/24061 | scraped=7600 emails_found=3276
+2026-06-04 17:11:11,540 INFO Progress 7650/24061 | scraped=7650 emails_found=3299
+2026-06-04 17:11:26,551 INFO Progress 7700/24061 | scraped=7700 emails_found=3322
+2026-06-04 17:11:50,207 INFO Progress 7750/24061 | scraped=7750 emails_found=3348
+2026-06-04 17:12:07,206 INFO Progress 7800/24061 | scraped=7800 emails_found=3365
+2026-06-04 17:12:22,150 INFO Progress 7850/24061 | scraped=7850 emails_found=3385
+2026-06-04 17:12:45,658 INFO Progress 7900/24061 | scraped=7900 emails_found=3413
+2026-06-04 17:12:59,685 INFO Progress 7950/24061 | scraped=7950 emails_found=3439
+2026-06-04 17:13:21,506 INFO Progress 8000/24061 | scraped=8000 emails_found=3453
+2026-06-04 17:13:37,476 INFO Progress 8050/24061 | scraped=8050 emails_found=3468
+2026-06-04 17:13:59,168 INFO Progress 8100/24061 | scraped=8100 emails_found=3494
+2026-06-04 17:14:16,109 INFO Progress 8150/24061 | scraped=8150 emails_found=3513
+2026-06-04 17:14:31,692 INFO Progress 8200/24061 | scraped=8200 emails_found=3530
+2026-06-04 17:14:44,907 INFO Progress 8250/24061 | scraped=8250 emails_found=3556
+2026-06-04 17:14:55,821 INFO Progress 8300/24061 | scraped=8300 emails_found=3582
+2026-06-04 17:15:12,006 INFO Progress 8350/24061 | scraped=8350 emails_found=3600
+2026-06-04 17:15:35,908 INFO Progress 8400/24061 | scraped=8400 emails_found=3623
+2026-06-04 17:15:59,168 INFO Progress 8450/24061 | scraped=8450 emails_found=3644
+2026-06-04 17:16:13,647 INFO Progress 8500/24061 | scraped=8500 emails_found=3664
+2026-06-04 17:16:26,351 INFO Progress 8550/24061 | scraped=8550 emails_found=3691
+2026-06-04 17:16:40,782 INFO Progress 8600/24061 | scraped=8600 emails_found=3714
+2026-06-04 17:16:58,253 INFO Progress 8650/24061 | scraped=8650 emails_found=3738
+2026-06-04 17:17:17,292 INFO Progress 8700/24061 | scraped=8700 emails_found=3757
+2026-06-04 17:17:39,910 INFO Progress 8750/24061 | scraped=8750 emails_found=3781
+2026-06-04 17:17:57,731 INFO Progress 8800/24061 | scraped=8800 emails_found=3801
+2026-06-04 17:18:09,934 INFO Progress 8850/24061 | scraped=8850 emails_found=3827
+2026-06-04 17:18:30,482 INFO Progress 8900/24061 | scraped=8900 emails_found=3850
+2026-06-04 17:18:45,290 INFO Progress 8950/24061 | scraped=8950 emails_found=3868
+2026-06-04 17:19:04,950 INFO Progress 9000/24061 | scraped=9000 emails_found=3890
+2026-06-04 17:19:29,319 INFO Progress 9050/24061 | scraped=9050 emails_found=3911
+2026-06-04 17:19:45,141 INFO Progress 9100/24061 | scraped=9100 emails_found=3933
+2026-06-04 17:20:04,657 INFO Progress 9150/24061 | scraped=9150 emails_found=3957
+2026-06-04 17:20:17,809 INFO Progress 9200/24061 | scraped=9200 emails_found=3980
+2026-06-04 17:20:34,833 INFO Progress 9250/24061 | scraped=9250 emails_found=4003
+2026-06-04 17:20:48,502 INFO Progress 9300/24061 | scraped=9300 emails_found=4031
+2026-06-04 17:21:02,241 INFO Progress 9350/24061 | scraped=9350 emails_found=4058
+2026-06-04 17:21:14,571 INFO Progress 9400/24061 | scraped=9400 emails_found=4076
+2026-06-04 17:21:27,393 INFO Progress 9450/24061 | scraped=9450 emails_found=4098
+2026-06-04 17:21:43,137 INFO Progress 9500/24061 | scraped=9500 emails_found=4122
+2026-06-04 17:21:59,630 INFO Progress 9550/24061 | scraped=9550 emails_found=4140
+2026-06-04 17:22:12,817 INFO Progress 9600/24061 | scraped=9600 emails_found=4165
+2026-06-04 17:22:29,226 INFO Progress 9650/24061 | scraped=9650 emails_found=4186
+2026-06-04 17:22:49,703 INFO Progress 9700/24061 | scraped=9700 emails_found=4209
+2026-06-04 17:23:04,093 INFO Progress 9750/24061 | scraped=9750 emails_found=4229
+2026-06-04 17:23:25,509 INFO Progress 9800/24061 | scraped=9800 emails_found=4249
+2026-06-04 17:23:39,599 INFO Progress 9850/24061 | scraped=9850 emails_found=4279
+2026-06-04 17:23:56,249 INFO Progress 9900/24061 | scraped=9900 emails_found=4300
+2026-06-04 17:24:14,969 INFO Progress 9950/24061 | scraped=9950 emails_found=4321
+2026-06-04 17:24:33,252 INFO Progress 10000/24061 | scraped=10000 emails_found=4335
+2026-06-04 17:24:56,144 INFO Progress 10050/24061 | scraped=10050 emails_found=4360
+2026-06-04 17:25:23,054 INFO Progress 10100/24061 | scraped=10100 emails_found=4379
+2026-06-04 17:25:45,995 INFO Progress 10150/24061 | scraped=10150 emails_found=4401
+2026-06-04 17:26:04,002 INFO Progress 10200/24061 | scraped=10200 emails_found=4417
+2026-06-04 17:26:16,271 INFO Progress 10250/24061 | scraped=10250 emails_found=4444
+2026-06-04 17:26:31,408 INFO Progress 10300/24061 | scraped=10300 emails_found=4473
+2026-06-04 17:26:51,198 INFO Progress 10350/24061 | scraped=10350 emails_found=4494
+2026-06-04 17:27:07,249 INFO Progress 10400/24061 | scraped=10400 emails_found=4518
+2026-06-04 17:27:20,720 INFO Progress 10450/24061 | scraped=10450 emails_found=4541
+2026-06-04 17:27:32,386 INFO Progress 10500/24061 | scraped=10500 emails_found=4563
+2026-06-04 17:27:52,894 INFO Progress 10550/24061 | scraped=10550 emails_found=4579
+2026-06-04 17:28:07,384 INFO Progress 10600/24061 | scraped=10600 emails_found=4601
+2026-06-04 17:28:23,454 INFO Progress 10650/24061 | scraped=10650 emails_found=4621
+2026-06-04 17:28:43,556 INFO Progress 10700/24061 | scraped=10700 emails_found=4642
+2026-06-04 17:28:52,670 INFO Progress 10750/24061 | scraped=10750 emails_found=4667
+2026-06-04 17:29:10,127 INFO Progress 10800/24061 | scraped=10800 emails_found=4686
+2026-06-04 17:29:22,077 INFO Progress 10850/24061 | scraped=10850 emails_found=4711
+2026-06-04 17:29:36,625 INFO Progress 10900/24061 | scraped=10900 emails_found=4729
+2026-06-04 17:29:50,510 INFO Progress 10950/24061 | scraped=10950 emails_found=4755
+2026-06-04 17:30:06,768 INFO Progress 11000/24061 | scraped=11000 emails_found=4787
+2026-06-04 17:30:14,635 INFO Progress 11050/24061 | scraped=11050 emails_found=4816
+2026-06-04 17:30:31,662 INFO Progress 11100/24061 | scraped=11100 emails_found=4840
+2026-06-04 17:30:52,280 INFO Progress 11150/24061 | scraped=11150 emails_found=4861
+2026-06-04 17:31:05,979 INFO Progress 11200/24061 | scraped=11200 emails_found=4881
+2026-06-04 17:31:26,311 INFO Progress 11250/24061 | scraped=11250 emails_found=4902
+2026-06-04 17:31:42,395 INFO Progress 11300/24061 | scraped=11300 emails_found=4929
+2026-06-04 17:31:57,887 INFO Progress 11350/24061 | scraped=11350 emails_found=4954
+2026-06-04 17:32:09,559 INFO Progress 11400/24061 | scraped=11400 emails_found=4979
+2026-06-04 17:32:17,746 INFO Progress 11450/24061 | scraped=11450 emails_found=5002
+2026-06-04 17:32:28,037 INFO Progress 11500/24061 | scraped=11500 emails_found=5025
+2026-06-04 17:32:40,107 INFO Progress 11550/24061 | scraped=11550 emails_found=5046
+2026-06-04 17:32:54,572 INFO Progress 11600/24061 | scraped=11600 emails_found=5075
+2026-06-04 17:33:09,530 INFO Progress 11650/24061 | scraped=11650 emails_found=5097
+2026-06-04 17:33:26,498 INFO Progress 11700/24061 | scraped=11700 emails_found=5127
+2026-06-04 17:33:36,457 INFO Progress 11750/24061 | scraped=11750 emails_found=5150
+2026-06-04 17:33:53,546 INFO Progress 11800/24061 | scraped=11800 emails_found=5172
+2026-06-04 17:34:05,664 INFO Progress 11850/24061 | scraped=11850 emails_found=5197
+2026-06-04 17:34:23,175 INFO Progress 11900/24061 | scraped=11900 emails_found=5215
+2026-06-04 17:34:41,046 INFO Progress 11950/24061 | scraped=11950 emails_found=5239
+2026-06-04 17:34:56,361 INFO Progress 12000/24061 | scraped=12000 emails_found=5264
+2026-06-04 17:35:08,663 INFO Progress 12050/24061 | scraped=12050 emails_found=5290
+2026-06-04 17:35:18,441 INFO Progress 12100/24061 | scraped=12100 emails_found=5315
+2026-06-04 17:35:30,241 INFO Progress 12150/24061 | scraped=12150 emails_found=5334
+2026-06-04 17:35:44,831 INFO Progress 12200/24061 | scraped=12200 emails_found=5359
+2026-06-04 17:35:57,271 INFO Progress 12250/24061 | scraped=12250 emails_found=5382
+2026-06-04 17:36:12,903 INFO Progress 12300/24061 | scraped=12300 emails_found=5414
+2026-06-04 17:36:40,590 INFO Progress 12350/24061 | scraped=12350 emails_found=5433
+2026-06-04 17:37:03,595 INFO Progress 12400/24061 | scraped=12400 emails_found=5456
+2026-06-04 17:37:18,313 INFO Progress 12450/24061 | scraped=12450 emails_found=5476
+2026-06-04 17:37:32,535 INFO Progress 12500/24061 | scraped=12500 emails_found=5497
+2026-06-04 17:37:52,867 INFO Progress 12550/24061 | scraped=12550 emails_found=5522
+2026-06-04 17:38:07,345 INFO Progress 12600/24061 | scraped=12600 emails_found=5548
+2026-06-04 17:38:17,916 INFO Progress 12650/24061 | scraped=12650 emails_found=5575
+2026-06-04 17:38:30,838 INFO Progress 12700/24061 | scraped=12700 emails_found=5598
+2026-06-04 17:38:42,719 INFO Progress 12750/24061 | scraped=12750 emails_found=5621
+2026-06-04 17:39:07,178 INFO Progress 12800/24061 | scraped=12800 emails_found=5641
+2026-06-04 17:39:22,865 INFO Progress 12850/24061 | scraped=12850 emails_found=5658
+2026-06-04 17:39:37,213 INFO Progress 12900/24061 | scraped=12900 emails_found=5682
+2026-06-04 17:39:50,607 INFO Progress 12950/24061 | scraped=12950 emails_found=5703
+2026-06-04 17:40:07,146 INFO Progress 13000/24061 | scraped=13000 emails_found=5721
+2026-06-04 17:40:20,957 INFO Progress 13050/24061 | scraped=13050 emails_found=5743
+2026-06-04 17:40:35,463 INFO Progress 13100/24061 | scraped=13100 emails_found=5766
+2026-06-04 17:40:49,665 INFO Progress 13150/24061 | scraped=13150 emails_found=5789
+2026-06-04 17:41:00,541 INFO Progress 13200/24061 | scraped=13200 emails_found=5808
+2026-06-04 17:41:10,943 INFO Progress 13250/24061 | scraped=13250 emails_found=5835
+2026-06-04 17:41:30,683 INFO Progress 13300/24061 | scraped=13300 emails_found=5866
+2026-06-04 17:41:49,907 INFO Progress 13350/24061 | scraped=13350 emails_found=5889
+2026-06-04 17:42:03,046 INFO Progress 13400/24061 | scraped=13400 emails_found=5905
+2026-06-04 17:42:15,092 INFO Progress 13450/24061 | scraped=13450 emails_found=5922
+2026-06-04 17:42:29,418 INFO Progress 13500/24061 | scraped=13500 emails_found=5948
+2026-06-04 17:42:44,067 INFO Progress 13550/24061 | scraped=13550 emails_found=5974
+2026-06-04 17:43:01,306 INFO Progress 13600/24061 | scraped=13600 emails_found=5991
+2026-06-04 17:43:13,941 INFO Progress 13650/24061 | scraped=13650 emails_found=6012
+2026-06-04 17:43:37,639 INFO Progress 13700/24061 | scraped=13700 emails_found=6039
+2026-06-04 17:43:56,153 INFO Progress 13750/24061 | scraped=13750 emails_found=6061
+2026-06-04 17:44:09,988 INFO Progress 13800/24061 | scraped=13800 emails_found=6074
+2026-06-04 17:44:27,537 INFO Progress 13850/24061 | scraped=13850 emails_found=6092
+2026-06-04 17:44:49,886 INFO Progress 13900/24061 | scraped=13900 emails_found=6117
+2026-06-04 17:44:59,608 INFO Progress 13950/24061 | scraped=13950 emails_found=6136
+2026-06-04 17:45:14,788 INFO Progress 14000/24061 | scraped=14000 emails_found=6162
+2026-06-04 17:45:23,453 INFO Progress 14050/24061 | scraped=14050 emails_found=6192
+2026-06-04 17:45:32,498 INFO Progress 14100/24061 | scraped=14100 emails_found=6219
+2026-06-04 17:45:43,107 INFO Progress 14150/24061 | scraped=14150 emails_found=6243
+2026-06-04 17:46:04,042 INFO Progress 14200/24061 | scraped=14200 emails_found=6260
+2026-06-04 17:46:16,365 INFO Progress 14250/24061 | scraped=14250 emails_found=6289
+2026-06-04 17:46:32,006 INFO Progress 14300/24061 | scraped=14300 emails_found=6304
+2026-06-04 17:46:51,893 INFO Progress 14350/24061 | scraped=14350 emails_found=6324
+2026-06-04 17:47:15,401 INFO Progress 14400/24061 | scraped=14400 emails_found=6347
+2026-06-04 17:47:34,843 INFO Progress 14450/24061 | scraped=14450 emails_found=6370
+2026-06-04 17:47:47,627 INFO Progress 14500/24061 | scraped=14500 emails_found=6395
+2026-06-04 17:48:18,474 INFO Progress 14550/24061 | scraped=14550 emails_found=6420
+2026-06-04 17:48:44,523 INFO Progress 14600/24061 | scraped=14600 emails_found=6439
+2026-06-04 17:48:59,589 INFO Progress 14650/24061 | scraped=14650 emails_found=6465
+2026-06-04 17:49:17,318 INFO Progress 14700/24061 | scraped=14700 emails_found=6491
+2026-06-04 17:49:38,775 INFO Progress 14750/24061 | scraped=14750 emails_found=6514
+2026-06-04 17:49:52,242 INFO Progress 14800/24061 | scraped=14800 emails_found=6536
+2026-06-04 17:50:09,780 INFO Progress 14850/24061 | scraped=14850 emails_found=6557
+2026-06-04 17:50:28,961 INFO Progress 14900/24061 | scraped=14900 emails_found=6582
+2026-06-04 17:50:42,634 INFO Progress 14950/24061 | scraped=14950 emails_found=6609
+2026-06-04 17:51:00,188 INFO Progress 15000/24061 | scraped=15000 emails_found=6633
+2026-06-04 17:51:15,063 INFO Progress 15050/24061 | scraped=15050 emails_found=6656
+2026-06-04 17:51:29,351 INFO Progress 15100/24061 | scraped=15100 emails_found=6678
+2026-06-04 17:51:45,425 INFO Progress 15150/24061 | scraped=15150 emails_found=6700
+2026-06-04 17:52:02,691 INFO Progress 15200/24061 | scraped=15200 emails_found=6724
+2026-06-04 17:52:20,396 INFO Progress 15250/24061 | scraped=15250 emails_found=6755
+2026-06-04 17:52:33,774 INFO Progress 15300/24061 | scraped=15300 emails_found=6783
+2026-06-04 17:52:47,683 INFO Progress 15350/24061 | scraped=15350 emails_found=6812
+2026-06-04 17:53:19,145 INFO Progress 15400/24061 | scraped=15400 emails_found=6828
+2026-06-04 17:53:37,435 INFO Progress 15450/24061 | scraped=15450 emails_found=6849
+2026-06-04 17:53:54,395 INFO Progress 15500/24061 | scraped=15500 emails_found=6871
+2026-06-04 17:54:08,843 INFO Progress 15550/24061 | scraped=15550 emails_found=6897
+2026-06-04 17:54:21,951 INFO Progress 15600/24061 | scraped=15600 emails_found=6925
+2026-06-04 17:54:45,855 INFO Progress 15650/24061 | scraped=15650 emails_found=6951
+2026-06-04 17:55:09,068 INFO Progress 15700/24061 | scraped=15700 emails_found=6972
+2026-06-04 17:55:23,520 INFO Progress 15750/24061 | scraped=15750 emails_found=6993
+2026-06-04 17:55:38,270 INFO Progress 15800/24061 | scraped=15800 emails_found=7013
+2026-06-04 17:55:54,037 INFO Progress 15850/24061 | scraped=15850 emails_found=7034
+2026-06-04 17:56:08,505 INFO Progress 15900/24061 | scraped=15900 emails_found=7058
+2026-06-04 17:56:36,588 INFO Progress 15950/24061 | scraped=15950 emails_found=7078
+2026-06-04 17:56:56,545 INFO Progress 16000/24061 | scraped=16000 emails_found=7101
+2026-06-04 17:57:14,327 INFO Progress 16050/24061 | scraped=16050 emails_found=7126
+2026-06-04 17:57:29,029 INFO Progress 16100/24061 | scraped=16100 emails_found=7150
+2026-06-04 17:57:42,596 INFO Progress 16150/24061 | scraped=16150 emails_found=7175
+2026-06-04 17:57:58,778 INFO Progress 16200/24061 | scraped=16200 emails_found=7200
+2026-06-04 17:58:18,822 INFO Progress 16250/24061 | scraped=16250 emails_found=7221
+2026-06-04 17:58:38,824 INFO Progress 16300/24061 | scraped=16300 emails_found=7242
+2026-06-04 17:59:00,119 INFO Progress 16350/24061 | scraped=16350 emails_found=7269
+2026-06-04 17:59:19,384 INFO Progress 16400/24061 | scraped=16400 emails_found=7290
+2026-06-04 17:59:37,103 INFO Progress 16450/24061 | scraped=16450 emails_found=7313
+2026-06-04 17:59:57,438 INFO Progress 16500/24061 | scraped=16500 emails_found=7333
+2026-06-04 18:00:22,896 INFO Progress 16550/24061 | scraped=16550 emails_found=7358
+2026-06-04 18:00:39,186 INFO Progress 16600/24061 | scraped=16600 emails_found=7387
+2026-06-04 18:00:52,550 INFO Progress 16650/24061 | scraped=16650 emails_found=7412
+2026-06-04 18:01:10,265 INFO Progress 16700/24061 | scraped=16700 emails_found=7435
+2026-06-04 18:01:24,234 INFO Progress 16750/24061 | scraped=16750 emails_found=7463
+2026-06-04 18:01:42,652 INFO Progress 16800/24061 | scraped=16800 emails_found=7485
+2026-06-04 18:02:09,476 INFO Progress 16850/24061 | scraped=16850 emails_found=7515
+2026-06-04 18:02:22,144 INFO Progress 16900/24061 | scraped=16900 emails_found=7540
+2026-06-04 18:02:37,535 INFO Progress 16950/24061 | scraped=16950 emails_found=7561
+2026-06-04 18:02:55,240 INFO Progress 17000/24061 | scraped=17000 emails_found=7581
+2026-06-04 18:03:10,044 INFO Progress 17050/24061 | scraped=17050 emails_found=7610
+2026-06-04 18:03:27,642 INFO Progress 17100/24061 | scraped=17100 emails_found=7633
+2026-06-04 18:03:42,481 INFO Progress 17150/24061 | scraped=17150 emails_found=7655
+2026-06-04 18:03:57,066 INFO Progress 17200/24061 | scraped=17200 emails_found=7677
+2026-06-04 18:04:08,054 INFO Progress 17250/24061 | scraped=17250 emails_found=7705
+2026-06-04 18:04:21,060 INFO Progress 17300/24061 | scraped=17300 emails_found=7730
+2026-06-04 18:04:36,032 INFO Progress 17350/24061 | scraped=17350 emails_found=7750
+2026-06-04 18:04:45,933 INFO Progress 17400/24061 | scraped=17400 emails_found=7777
+2026-06-04 18:04:59,800 INFO Progress 17450/24061 | scraped=17450 emails_found=7804
+2026-06-04 18:05:14,772 INFO Progress 17500/24061 | scraped=17500 emails_found=7827
+2026-06-04 18:05:27,253 INFO Progress 17550/24061 | scraped=17550 emails_found=7840
+2026-06-04 18:05:43,052 INFO Progress 17600/24061 | scraped=17600 emails_found=7856
+2026-06-04 18:05:53,230 INFO Progress 17650/24061 | scraped=17650 emails_found=7877
+2026-06-04 18:06:07,617 INFO Progress 17700/24061 | scraped=17700 emails_found=7900
+2026-06-04 18:06:22,234 INFO Progress 17750/24061 | scraped=17750 emails_found=7921
+2026-06-04 18:06:36,433 INFO Progress 17800/24061 | scraped=17800 emails_found=7946
+2026-06-04 18:06:56,167 INFO Progress 17850/24061 | scraped=17850 emails_found=7968
+2026-06-04 18:07:22,461 INFO Progress 17900/24061 | scraped=17900 emails_found=7991
+2026-06-04 18:07:34,573 INFO Progress 17950/24061 | scraped=17950 emails_found=8023
+2026-06-04 18:07:51,687 INFO Progress 18000/24061 | scraped=18000 emails_found=8044
+2026-06-04 18:08:08,794 INFO Progress 18050/24061 | scraped=18050 emails_found=8059
+2026-06-04 18:08:25,600 INFO Progress 18100/24061 | scraped=18100 emails_found=8089
+2026-06-04 18:08:37,939 INFO Progress 18150/24061 | scraped=18150 emails_found=8111
+2026-06-04 18:08:54,716 INFO Progress 18200/24061 | scraped=18200 emails_found=8134
+2026-06-04 18:09:16,842 INFO Progress 18250/24061 | scraped=18250 emails_found=8159
+2026-06-04 18:09:36,454 INFO Progress 18300/24061 | scraped=18300 emails_found=8184
+2026-06-04 18:09:48,340 INFO Progress 18350/24061 | scraped=18350 emails_found=8217
+2026-06-04 18:09:59,896 INFO Progress 18400/24061 | scraped=18400 emails_found=8247
+2026-06-04 18:10:09,987 INFO Progress 18450/24061 | scraped=18450 emails_found=8266
+2026-06-04 18:10:23,373 INFO Progress 18500/24061 | scraped=18500 emails_found=8290
+2026-06-04 18:10:35,402 INFO Progress 18550/24061 | scraped=18550 emails_found=8314
+2026-06-04 18:10:47,915 INFO Progress 18600/24061 | scraped=18600 emails_found=8338
+2026-06-04 18:10:58,569 INFO Progress 18650/24061 | scraped=18650 emails_found=8357
+2026-06-04 18:11:09,120 INFO Progress 18700/24061 | scraped=18700 emails_found=8380
+2026-06-04 18:11:21,411 INFO Progress 18750/24061 | scraped=18750 emails_found=8401
+2026-06-04 18:11:30,662 INFO Progress 18800/24061 | scraped=18800 emails_found=8423
+2026-06-04 18:11:40,335 INFO Progress 18850/24061 | scraped=18850 emails_found=8446
+2026-06-04 18:11:55,683 INFO Progress 18900/24061 | scraped=18900 emails_found=8476
+2026-06-04 18:12:06,939 INFO Progress 18950/24061 | scraped=18950 emails_found=8497
+2026-06-04 18:12:26,627 INFO Progress 19000/24061 | scraped=19000 emails_found=8522
+2026-06-04 18:12:46,415 INFO Progress 19050/24061 | scraped=19050 emails_found=8543
+2026-06-04 18:13:01,878 INFO Progress 19100/24061 | scraped=19100 emails_found=8568
+2026-06-04 18:13:17,593 INFO Progress 19150/24061 | scraped=19150 emails_found=8596
+2026-06-04 18:13:30,392 INFO Progress 19200/24061 | scraped=19200 emails_found=8615
+2026-06-04 18:13:46,134 INFO Progress 19250/24061 | scraped=19250 emails_found=8637
+2026-06-04 18:14:01,479 INFO Progress 19300/24061 | scraped=19300 emails_found=8659
+2026-06-04 18:14:16,873 INFO Progress 19350/24061 | scraped=19350 emails_found=8680
+2026-06-04 18:14:27,670 INFO Progress 19400/24061 | scraped=19400 emails_found=8702
+2026-06-04 18:14:42,775 INFO Progress 19450/24061 | scraped=19450 emails_found=8717
+2026-06-04 18:14:52,930 INFO Progress 19500/24061 | scraped=19500 emails_found=8741
+2026-06-04 18:15:03,300 INFO Progress 19550/24061 | scraped=19550 emails_found=8771
+2026-06-04 18:15:17,970 INFO Progress 19600/24061 | scraped=19600 emails_found=8796
+2026-06-04 18:15:28,392 INFO Progress 19650/24061 | scraped=19650 emails_found=8817
+2026-06-04 18:15:41,538 INFO Progress 19700/24061 | scraped=19700 emails_found=8841
+2026-06-04 18:15:55,140 INFO Progress 19750/24061 | scraped=19750 emails_found=8861
+2026-06-04 18:16:09,751 INFO Progress 19800/24061 | scraped=19800 emails_found=8882
+2026-06-04 18:16:20,509 INFO Progress 19850/24061 | scraped=19850 emails_found=8899
+2026-06-04 18:16:31,349 INFO Progress 19900/24061 | scraped=19900 emails_found=8917
+2026-06-04 18:16:48,809 INFO Progress 19950/24061 | scraped=19950 emails_found=8933
+2026-06-04 18:17:03,301 INFO Progress 20000/24061 | scraped=20000 emails_found=8955
+2026-06-04 18:17:14,265 INFO Progress 20050/24061 | scraped=20050 emails_found=8980
+2026-06-04 18:17:25,782 INFO Progress 20100/24061 | scraped=20100 emails_found=9011
+2026-06-04 18:17:40,053 INFO Progress 20150/24061 | scraped=20150 emails_found=9032
+2026-06-04 18:17:52,255 INFO Progress 20200/24061 | scraped=20200 emails_found=9053
+2026-06-04 18:18:02,081 INFO Progress 20250/24061 | scraped=20250 emails_found=9073
+2026-06-04 18:18:16,159 INFO Progress 20300/24061 | scraped=20300 emails_found=9098
+2026-06-04 18:18:29,995 INFO Progress 20350/24061 | scraped=20350 emails_found=9125
+2026-06-04 18:18:52,050 INFO Progress 20400/24061 | scraped=20400 emails_found=9149
+2026-06-04 18:19:02,498 INFO Progress 20450/24061 | scraped=20450 emails_found=9181
+2026-06-04 18:19:12,244 INFO Progress 20500/24061 | scraped=20500 emails_found=9207
+2026-06-04 18:19:22,273 INFO Progress 20550/24061 | scraped=20550 emails_found=9228
+2026-06-04 18:19:37,757 INFO Progress 20600/24061 | scraped=20600 emails_found=9253
+2026-06-04 18:19:50,229 INFO Progress 20650/24061 | scraped=20650 emails_found=9276
+2026-06-04 18:20:01,552 INFO Progress 20700/24061 | scraped=20700 emails_found=9301
+2026-06-04 18:20:14,837 INFO Progress 20750/24061 | scraped=20750 emails_found=9326
+2026-06-04 18:20:26,607 INFO Progress 20800/24061 | scraped=20800 emails_found=9349
+2026-06-04 18:20:38,300 INFO Progress 20850/24061 | scraped=20850 emails_found=9372
+2026-06-04 18:20:52,279 INFO Progress 20900/24061 | scraped=20900 emails_found=9398
+2026-06-04 18:21:07,822 INFO Progress 20950/24061 | scraped=20950 emails_found=9419
+2026-06-04 18:21:25,553 INFO Progress 21000/24061 | scraped=21000 emails_found=9445
+2026-06-04 18:21:39,357 INFO Progress 21050/24061 | scraped=21050 emails_found=9473
+2026-06-04 18:21:58,546 INFO Progress 21100/24061 | scraped=21100 emails_found=9486
+2026-06-04 18:22:15,024 INFO Progress 21150/24061 | scraped=21150 emails_found=9513
+2026-06-04 18:22:30,600 INFO Progress 21200/24061 | scraped=21200 emails_found=9538
+2026-06-04 18:22:45,752 INFO Progress 21250/24061 | scraped=21250 emails_found=9563
+2026-06-04 18:22:59,293 INFO Progress 21300/24061 | scraped=21300 emails_found=9586
+2026-06-04 18:23:14,608 INFO Progress 21350/24061 | scraped=21350 emails_found=9616
+2026-06-04 18:23:24,819 INFO Progress 21400/24061 | scraped=21400 emails_found=9645
+2026-06-04 18:23:35,974 INFO Progress 21450/24061 | scraped=21450 emails_found=9673
+2026-06-04 18:23:49,807 INFO Progress 21500/24061 | scraped=21500 emails_found=9699
+2026-06-04 18:24:08,516 INFO Progress 21550/24061 | scraped=21550 emails_found=9719
+2026-06-04 18:24:22,476 INFO Progress 21600/24061 | scraped=21600 emails_found=9738
+2026-06-04 18:24:37,280 INFO Progress 21650/24061 | scraped=21650 emails_found=9763
+2026-06-04 18:24:54,569 INFO Progress 21700/24061 | scraped=21700 emails_found=9790
+2026-06-04 18:25:06,396 INFO Progress 21750/24061 | scraped=21750 emails_found=9814
+2026-06-04 18:25:31,590 INFO Progress 21800/24061 | scraped=21800 emails_found=9839
+2026-06-04 18:25:42,632 INFO Progress 21850/24061 | scraped=21850 emails_found=9864
+2026-06-04 18:25:56,871 INFO Progress 21900/24061 | scraped=21900 emails_found=9879
+2026-06-04 18:26:11,942 INFO Progress 21950/24061 | scraped=21950 emails_found=9903
+2026-06-04 18:26:29,766 INFO Progress 22000/24061 | scraped=22000 emails_found=9923
+2026-06-04 18:26:46,116 INFO Progress 22050/24061 | scraped=22050 emails_found=9952
+2026-06-04 18:27:02,615 INFO Progress 22100/24061 | scraped=22100 emails_found=9972
+2026-06-04 18:27:13,722 INFO Progress 22150/24061 | scraped=22150 emails_found=9992
+2026-06-04 18:27:25,067 INFO Progress 22200/24061 | scraped=22200 emails_found=10014
+2026-06-04 18:27:41,984 INFO Progress 22250/24061 | scraped=22250 emails_found=10038
+2026-06-04 18:27:52,430 INFO Progress 22300/24061 | scraped=22300 emails_found=10058
+2026-06-04 18:28:05,650 INFO Progress 22350/24061 | scraped=22350 emails_found=10075
+2026-06-04 18:28:19,355 INFO Progress 22400/24061 | scraped=22400 emails_found=10096
+2026-06-04 18:28:30,238 INFO Progress 22450/24061 | scraped=22450 emails_found=10119
+2026-06-04 18:28:42,420 INFO Progress 22500/24061 | scraped=22500 emails_found=10136
+2026-06-04 18:28:53,030 INFO Progress 22550/24061 | scraped=22550 emails_found=10161
+2026-06-04 18:29:03,669 INFO Progress 22600/24061 | scraped=22600 emails_found=10183
+2026-06-04 18:29:16,514 INFO Progress 22650/24061 | scraped=22650 emails_found=10203
+2026-06-04 18:29:27,198 INFO Progress 22700/24061 | scraped=22700 emails_found=10218
+2026-06-04 18:29:38,583 INFO Progress 22750/24061 | scraped=22750 emails_found=10243
+2026-06-04 18:29:56,256 INFO Progress 22800/24061 | scraped=22800 emails_found=10258
+2026-06-04 18:30:13,657 INFO Progress 22850/24061 | scraped=22850 emails_found=10282
+2026-06-04 18:30:25,696 INFO Progress 22900/24061 | scraped=22900 emails_found=10301
+2026-06-04 18:30:37,471 INFO Progress 22950/24061 | scraped=22950 emails_found=10326
+2026-06-04 18:30:47,833 INFO Progress 23000/24061 | scraped=23000 emails_found=10353
+2026-06-04 18:31:00,098 INFO Progress 23050/24061 | scraped=23050 emails_found=10380
+2026-06-04 18:31:09,513 INFO Progress 23100/24061 | scraped=23100 emails_found=10403
+2026-06-04 18:31:28,469 INFO Progress 23150/24061 | scraped=23150 emails_found=10426
+2026-06-04 18:31:47,017 INFO Progress 23200/24061 | scraped=23200 emails_found=10446
+2026-06-04 18:31:59,041 INFO Progress 23250/24061 | scraped=23250 emails_found=10470
+2026-06-04 18:32:12,783 INFO Progress 23300/24061 | scraped=23300 emails_found=10487
+2026-06-04 18:32:24,027 INFO Progress 23350/24061 | scraped=23350 emails_found=10511
+2026-06-04 18:32:34,378 INFO Progress 23400/24061 | scraped=23400 emails_found=10536
+2026-06-04 18:32:51,779 INFO Progress 23450/24061 | scraped=23450 emails_found=10559
+2026-06-04 18:33:03,537 INFO Progress 23500/24061 | scraped=23500 emails_found=10579
+2026-06-04 18:33:20,755 INFO Progress 23550/24061 | scraped=23550 emails_found=10605
+2026-06-04 18:33:31,946 INFO Progress 23600/24061 | scraped=23600 emails_found=10630
+2026-06-04 18:33:44,603 INFO Progress 23650/24061 | scraped=23650 emails_found=10653
+2026-06-04 18:33:57,584 INFO Progress 23700/24061 | scraped=23700 emails_found=10685
+2026-06-04 18:34:08,670 INFO Progress 23750/24061 | scraped=23750 emails_found=10704
+2026-06-04 18:34:20,615 INFO Progress 23800/24061 | scraped=23800 emails_found=10729
+2026-06-04 18:34:31,723 INFO Progress 23850/24061 | scraped=23850 emails_found=10751
+2026-06-04 18:34:41,714 INFO Progress 23900/24061 | scraped=23900 emails_found=10776
+2026-06-04 18:34:59,190 INFO Progress 23950/24061 | scraped=23950 emails_found=10799
+2026-06-04 18:35:14,075 INFO Progress 24000/24061 | scraped=24000 emails_found=10825
+2026-06-04 18:35:23,956 INFO Progress 24050/24061 | scraped=24050 emails_found=10843
+2026-06-04 18:35:28,429 INFO Done. Scraped 24061 sites, found 10844 new emails. Total rows with email: 12260

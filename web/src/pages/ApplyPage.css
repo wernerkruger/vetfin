@@ -1,0 +1,84 @@
+.apply-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+}
+
+.apply-step {
+  color: var(--color-ink-muted);
+}
+
+.apply-step--active {
+  color: var(--color-teal-dark);
+  font-weight: 600;
+}
+
+.apply-step--done {
+  color: var(--color-teal);
+}
+
+.apply-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.apply-tabs button {
+  flex: 1;
+  padding: 0.65rem 1rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-white);
+  color: var(--color-ink);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.apply-tabs button:hover:not(.apply-tab--active) {
+  border-color: var(--color-teal-light);
+}
+
+.apply-tab--active {
+  background: var(--color-white);
+  color: var(--color-ink);
+  border-color: var(--color-teal-dark);
+  box-shadow: 0 0 0 1px var(--color-teal-dark);
+}
+
+.apply-section-title {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  margin: 0 0 0.5rem;
+}
+
+.apply-section-lead {
+  color: var(--color-ink-muted);
+  margin: 0 0 1.25rem;
+  font-size: 0.9375rem;
+}
+
+.apply-field-hint {
+  margin: -0.75rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-ink-muted);
+}
+
+.apply-error {
+  margin-bottom: 1rem;
+}
+
+.apply-bank-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.apply-review-list {
+  margin: 0 0 1.5rem;
+  padding-left: 1.25rem;
+  line-height: 1.8;
+}

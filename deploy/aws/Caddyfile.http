@@ -1,0 +1,4 @@
+# HTTP only — use with an Elastic IP and no domain yet.
+:80 {
+	reverse_proxy web:80
+}

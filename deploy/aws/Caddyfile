@@ -1,0 +1,6 @@
+# Used when DOMAIN is set (HTTPS via Let's Encrypt).
+# For IP-only testing, deploy.sh uses Caddyfile.http instead.
+
+{$DOMAIN} {
+	reverse_proxy web:80
+}

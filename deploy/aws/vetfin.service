@@ -1,0 +1,29 @@
+# systemd unit — auto-start VetFin on EC2 reboot.
+#
+# Install (adjust paths if your clone lives elsewhere):
+#   sudo cp deploy/aws/vetfin.service /etc/systemd/system/vetfin.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable vetfin
+#   sudo systemctl start vetfin
+
+[Unit]
+Description=VetFin (Docker Compose)
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/VetFin
+Environment=COMPOSE_PROFILES=http
+# For HTTPS, set COMPOSE_PROFILES=https and DOMAIN in api/.env, then use:
+# Environment=COMPOSE_PROFILES=https
+ExecStart=/usr/bin/docker compose -f docker-compose.yml -f deploy/aws/docker-compose.ec2.yml up -d --remove-orphans
+ExecStop=/usr/bin/docker compose -f docker-compose.yml -f deploy/aws/docker-compose.ec2.yml down
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target

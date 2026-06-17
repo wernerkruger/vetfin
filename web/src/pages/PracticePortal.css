@@ -1,0 +1,361 @@
+.portal {
+  min-height: 100vh;
+  background: var(--color-cream);
+  padding: 2rem 1.5rem 4rem;
+}
+
+.portal--centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.portal-inner {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.portal-inner--wide {
+  max-width: 960px;
+}
+
+.portal-header {
+  margin-bottom: 2rem;
+}
+
+.portal-back {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: 0.9375rem;
+}
+
+.portal-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  margin: 0 0 0.5rem;
+  color: var(--color-ink);
+}
+
+.portal-lead {
+  color: var(--color-ink-muted);
+  margin: 0;
+}
+
+.portal-card {
+  background: var(--color-white);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 2rem;
+}
+
+.portal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.portal-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 500;
+  font-size: 0.9375rem;
+}
+
+.portal-label input,
+.portal-label select {
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-cream);
+}
+
+.portal-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.portal-error {
+  color: #b42318;
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.portal-footer-text {
+  margin-top: 1.5rem;
+  text-align: center;
+  color: var(--color-ink-muted);
+  font-size: 0.9375rem;
+}
+
+.portal-status {
+  color: var(--color-ink-muted);
+}
+
+.portal-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.portal-topbar-brand {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.portal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .portal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .portal-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.portal-stat {
+  background: var(--color-accent-soft);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.25rem;
+}
+
+.portal-stat-value {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--color-teal-dark);
+  margin: 0;
+}
+
+.portal-stat-label {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-ink-muted);
+}
+
+.portal-referral-box {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.portal-url-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.portal-url-input {
+  flex: 1;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  background: var(--color-cream);
+}
+
+.portal-qr {
+  width: 200px;
+  height: 200px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+
+.portal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.portal-table th,
+.portal-table td {
+  text-align: left;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.portal-table th {
+  color: var(--color-ink-muted);
+  font-weight: 600;
+}
+
+.portal-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--color-cream-dark);
+  color: var(--color-ink-muted);
+}
+
+.portal-badge--started {
+  background: #e8f4f0;
+  color: var(--color-teal-dark);
+}
+
+.borrower-loans-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.borrower-loan-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.borrower-status {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--color-cream-dark);
+  color: var(--color-ink-muted);
+}
+
+.borrower-status--submitted {
+  background: #fff4e6;
+  color: #9a6700;
+}
+
+.borrower-status--approved,
+.borrower-status--active {
+  background: #e8f4f0;
+  color: var(--color-teal-dark);
+}
+
+.borrower-status--declined,
+.borrower-status--cancelled {
+  background: #fde8e8;
+  color: #9b1c1c;
+}
+
+.borrower-cancel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.btn--danger {
+  background: #9b1c1c;
+  color: #fff;
+  border: 1px solid #7f1515;
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: #7f1515;
+}
+
+.btn--danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.borrower-status--paid_off {
+  background: var(--color-cream-dark);
+  color: var(--color-ink);
+}
+
+.borrower-loan-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1rem 1.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+
+.borrower-loan-details dt {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-ink-muted);
+}
+
+.borrower-loan-details dd {
+  margin: 0.25rem 0 0;
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.borrower-practice-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.borrower-practice-list li + li {
+  margin-top: 0.5rem;
+}
+
+.borrower-practice-list a {
+  color: var(--color-teal-dark);
+  font-weight: 600;
+}
+
+.portal-grid--stats {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 720px) {
+  .portal-grid--stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.portal-table-wrap {
+  overflow-x: auto;
+}
+
+.practice-review-actions {
+  min-width: 10rem;
+}
+
+.practice-review-hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--color-ink-muted);
+}
+
+.practice-review-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.btn--small {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.portal-muted {
+  color: var(--color-ink-muted);
+}
+
+.portal-badge--submitted {
+  background: #fff4e6;
+  color: #9a6700;
+}

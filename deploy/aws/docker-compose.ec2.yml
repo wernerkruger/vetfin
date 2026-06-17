@@ -1,0 +1,45 @@
+# EC2 overlay — use from repo root:
+#   docker compose -f docker-compose.yml -f deploy/aws/docker-compose.ec2.yml up -d --build
+#
+# With HTTPS (set DOMAIN in api/.env or export DOMAIN=app.example.com):
+#   docker compose -f docker-compose.yml -f deploy/aws/docker-compose.ec2.yml --profile https up -d --build
+
+services:
+  web:
+    ports: []
+
+  caddy:
+    profiles: ["https"]
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN for HTTPS, e.g. app.example.com}
+    volumes:
+      - ./deploy/aws/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      web:
+        condition: service_started
+
+  caddy-http:
+    profiles: ["http"]
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./deploy/aws/Caddyfile.http:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      web:
+        condition: service_started
+
+volumes:
+  caddy-data:
+  caddy-config:
