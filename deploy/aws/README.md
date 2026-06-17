@@ -139,6 +139,7 @@ Copy the file off the instance regularly (S3, local machine, etc.).
 
 | Problem | Fix |
 |---------|-----|
+| `Bind for :::80 failed: port is already allocated` | Something else is using port 80. Run `sudo ss -tlnp \| grep ':80 '` and `docker ps`. Often a leftover container from `docker compose up` without the EC2 overlay — run `./deploy/aws/deploy.sh down`, then `docker ps --filter publish=80 -q \| xargs -r docker stop`, and redeploy |
 | `permission denied` on docker | Log out/in after `ec2-setup.sh`, or use `sudo docker` |
 | API won't start | Check `docker compose ... logs api` — usually missing `DATA_ENCRYPTION_KEY` or Plaid keys |
 | HTTPS certificate fails | Confirm DNS A record points to Elastic IP; ports 80 and 443 open |

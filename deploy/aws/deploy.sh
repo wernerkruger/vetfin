@@ -12,6 +12,30 @@ ENV_FILE="api/.env"
 red() { printf '\033[0;31m%s\033[0m\n' "$*"; }
 green() { printf '\033[0;32m%s\033[0m\n' "$*"; }
 
+port_listening() {
+  local port="$1"
+  if command -v ss >/dev/null 2>&1; then
+    ss -tlnH "sport = :$port" 2>/dev/null | grep -q .
+  else
+    netstat -tln 2>/dev/null | grep -q ":$port "
+  fi
+}
+
+require_port_free() {
+  local port="$1"
+  if port_listening "$port"; then
+    red "Port $port is already in use."
+    echo "Find what is listening:"
+    echo "  sudo ss -tlnp | grep ':$port '"
+    echo "  docker ps --format 'table {{.Names}}\t{{.Ports}}'"
+    echo ""
+    echo "Common fixes:"
+    echo "  ./deploy/aws/deploy.sh down"
+    echo "  docker ps --filter publish=$port -q | xargs -r docker stop"
+    exit 1
+  fi
+}
+
 if ! command -v docker >/dev/null 2>&1; then
   red "Docker not found. Run: ./deploy/aws/ec2-setup.sh"
   exit 1
@@ -54,6 +78,7 @@ fi
 
 case "$MODE" in
   http)
+    require_port_free 80
     green "==> Deploying VetFin (HTTP on port 80)..."
     $COMPOSE --profile http up -d --build --remove-orphans
   ;;
@@ -62,6 +87,8 @@ case "$MODE" in
       red "HTTPS mode requires DOMAIN in api/.env (e.g. DOMAIN=app.example.com)"
       exit 1
     fi
+    require_port_free 80
+    require_port_free 443
     green "==> Deploying VetFin (HTTPS for $DOMAIN)..."
     export DOMAIN
     $COMPOSE --profile https up -d --build --remove-orphans

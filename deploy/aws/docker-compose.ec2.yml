@@ -6,7 +6,8 @@
 
 services:
   web:
-    ports: []
+    # Base compose publishes :80 for local use; EC2 uses caddy on :80 instead.
+    ports: !reset []
 
   caddy:
     profiles: ["https"]
