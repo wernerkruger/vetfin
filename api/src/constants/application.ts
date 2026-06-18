@@ -94,3 +94,11 @@ export function needsVetReview(
 ): boolean {
   return status === "submitted" && vetApproved === null;
 }
+
+/** Clinic-confirmed application awaiting VetFin funding decision */
+export function needsFundingReview(
+  status: string,
+  vetApproved: VetApprovedValue,
+): boolean {
+  return status === "submitted" && vetApproved === 1;
+}

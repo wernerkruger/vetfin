@@ -5,12 +5,14 @@ import {
   borrowerStatusLabel,
   IN_PROGRESS_STATUSES,
   loanTermsVisible,
+  practiceStatusLabel,
   SERVICE_TYPES,
   type AnimalType,
   type ApplicationStatus,
   type ServiceType,
   type VetApprovedValue,
 } from "../constants/application.js";
+import { HttpError } from "../errors.js";
 import { getDb } from "./connection.js";
 import { getBorrowerById } from "./borrowers.js";
 
@@ -370,6 +372,95 @@ export function setVetApproval(
   }
 
   return getApplicationById(applicationId)!;
+}
+
+export function adminApproveApplication(applicationId: string): LoanApplicationRow {
+  const app = getApplicationById(applicationId);
+  if (!app) {
+    throw new HttpError(404, "Application not found");
+  }
+  if (app.status !== "submitted") {
+    throw new HttpError(400, "Only submitted applications can be approved");
+  }
+  if (normalizeVetApproved(app.vet_approved) !== 1) {
+    throw new HttpError(
+      400,
+      "The clinic must confirm this application before it can be approved for funding",
+    );
+  }
+
+  const database = getDb();
+  database
+    .prepare(
+      `UPDATE loan_applications
+       SET status = 'approved', approved_at = datetime('now'), updated_at = datetime('now')
+       WHERE id = ?`,
+    )
+    .run(applicationId);
+
+  database
+    .prepare(
+      `UPDATE customers SET application_status = 'approved', updated_at = datetime('now') WHERE id = ?`,
+    )
+    .run(app.customer_id);
+
+  return getApplicationById(applicationId)!;
+}
+
+export function adminDeclineApplication(applicationId: string): LoanApplicationRow {
+  const app = getApplicationById(applicationId);
+  if (!app) {
+    throw new HttpError(404, "Application not found");
+  }
+  if (app.status !== "submitted") {
+    throw new HttpError(400, "Only submitted applications can be declined");
+  }
+  if (normalizeVetApproved(app.vet_approved) !== 1) {
+    throw new HttpError(
+      400,
+      "The clinic must confirm this application before it can be declined for funding",
+    );
+  }
+
+  const database = getDb();
+  database
+    .prepare(
+      `UPDATE loan_applications
+       SET status = 'declined', updated_at = datetime('now')
+       WHERE id = ?`,
+    )
+    .run(applicationId);
+
+  database
+    .prepare(
+      `UPDATE customers SET application_status = 'declined', updated_at = datetime('now') WHERE id = ?`,
+    )
+    .run(app.customer_id);
+
+  return getApplicationById(applicationId)!;
+}
+
+export function listApplicationsForAdmin(customerId: string) {
+  const rows = getDb()
+    .prepare(
+      `SELECT la.*, vp.name AS practice_name
+       FROM loan_applications la
+       INNER JOIN vet_practices vp ON vp.id = la.practice_id
+       WHERE la.customer_id = ?
+       ORDER BY la.updated_at DESC`,
+    )
+    .all(customerId) as Array<LoanApplicationRow & { practice_name: string }>;
+
+  return rows.map((row) => {
+    const vetApproved = normalizeVetApproved(row.vet_approved);
+    const publicApp = toPublicApplication(row, { name: row.practice_name });
+    return {
+      ...publicApp,
+      practiceStatusLabel: practiceStatusLabel(row.status, vetApproved),
+      canApproveFunding: row.status === "submitted" && vetApproved === 1,
+      canDeclineFunding: row.status === "submitted" && vetApproved === 1,
+    };
+  });
 }
 
 export function listLoansForBorrower(customerId: string) {

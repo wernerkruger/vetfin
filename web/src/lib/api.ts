@@ -287,6 +287,8 @@ export type PracticeStats = {
   totalApplications: number;
   submitted: number;
   vetApproved: number;
+  fundingApproved: number;
+  declined: number;
   started: number;
 };
 
@@ -635,6 +637,17 @@ export async function cancelLoanApplication(applicationId: string) {
 
 // —— Admin ——
 
+export type AdminApplication = LoanApplication & {
+  practiceStatusLabel: string;
+  canApproveFunding: boolean;
+  canDeclineFunding: boolean;
+};
+
+export type AdminBorrowerDetail = {
+  borrower: BorrowerProfile;
+  applications: AdminApplication[];
+};
+
 export type AdminUser = {
   id: string;
   type: "borrower" | "practice";
@@ -686,4 +699,22 @@ export async function adminResetUserPassword(
     message: string;
     temporaryPassword: string;
   }>(`/api/admin/users/${type}/${id}/reset-password`, { method: "POST" });
+}
+
+export async function fetchAdminBorrower(id: string) {
+  return adminFetch<AdminBorrowerDetail>(`/api/admin/borrowers/${id}`);
+}
+
+export async function adminApproveApplication(applicationId: string) {
+  return adminFetch<{ application: LoanApplication }>(
+    `/api/admin/applications/${applicationId}/approve`,
+    { method: "POST" },
+  );
+}
+
+export async function adminDeclineApplication(applicationId: string) {
+  return adminFetch<{ application: LoanApplication }>(
+    `/api/admin/applications/${applicationId}/decline`,
+    { method: "POST" },
+  );
 }

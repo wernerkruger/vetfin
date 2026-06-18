@@ -25,6 +25,7 @@ function UserTable({
   unlockingId,
   onReset,
   onUnlock,
+  linkBorrowers = false,
 }: {
   users: AdminUser[];
   emptyMessage: string;
@@ -32,6 +33,7 @@ function UserTable({
   unlockingId: string | null;
   onReset: (user: AdminUser) => void;
   onUnlock: (user: AdminUser) => void;
+  linkBorrowers?: boolean;
 }) {
   if (users.length === 0) {
     return <p>{emptyMessage}</p>;
@@ -53,7 +55,13 @@ function UserTable({
         <tbody>
           {users.map((user) => (
             <tr key={user.id}>
-              <td>{user.displayName}</td>
+              <td>
+                {linkBorrowers && user.type === "borrower" ? (
+                  <Link to={`/admin/borrowers/${user.id}`}>{user.displayName}</Link>
+                ) : (
+                  user.displayName
+                )}
+              </td>
               <td>{user.email}</td>
               <td>{statusLabel(user)}</td>
               <td>{user.failedLoginAttempts}</td>
@@ -240,6 +248,7 @@ export default function AdminDashboardPage() {
               unlockingId={unlockingId}
               onReset={(user) => void handleReset(user)}
               onUnlock={(user) => void handleUnlock(user)}
+              linkBorrowers={tab === "borrowers"}
             />
           )}
         </div>

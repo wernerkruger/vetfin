@@ -1,5 +1,7 @@
 import { hashPassword } from "../crypto/password.js";
 import { generateTemporaryPassword } from "../auth/loginSecurity.js";
+import { listApplicationsForAdmin } from "./applications.js";
+import { getBorrowerById, toPublicBorrower } from "./borrowers.js";
 import { HttpError } from "../errors.js";
 import { getDb } from "./connection.js";
 
@@ -87,6 +89,18 @@ export function listAdminUsers(): {
   }));
 
   return { practices: practiceUsers, borrowers: borrowerUsers };
+}
+
+export function getAdminBorrowerDetail(customerId: string) {
+  const borrower = getBorrowerById(customerId);
+  if (!borrower) {
+    throw new HttpError(404, "Borrower not found");
+  }
+
+  return {
+    borrower: toPublicBorrower(borrower),
+    applications: listApplicationsForAdmin(customerId),
+  };
 }
 
 export async function adminResetUserPassword(

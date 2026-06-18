@@ -3,7 +3,13 @@ import { z } from "zod";
 import { signAdminToken } from "../auth/jwt.js";
 import { getConfig } from "../config.js";
 import { verifyPassword } from "../crypto/password.js";
-import { adminResetUserPassword, adminUnlockUser, listAdminUsers } from "../db/admin.js";
+import { adminResetUserPassword, adminUnlockUser, getAdminBorrowerDetail, listAdminUsers } from "../db/admin.js";
+import {
+  adminApproveApplication,
+  adminDeclineApplication,
+  toPublicApplication,
+} from "../db/applications.js";
+import { getPracticeById } from "../db/practices.js";
 import { HttpError } from "../errors.js";
 import { getAdminAuth, requireAdminAuth } from "../middleware/requireAdmin.js";
 
@@ -15,6 +21,14 @@ const loginBody = z.object({
 const resetParams = z.object({
   type: z.enum(["borrower", "practice"]),
   id: z.string().uuid(),
+});
+
+const idParam = z.object({
+  id: z.string().uuid(),
+});
+
+const applicationIdParam = z.object({
+  applicationId: z.string().uuid(),
 });
 
 export function adminRouter(): Router {
@@ -53,6 +67,55 @@ export function adminRouter(): Router {
     const { practices, borrowers } = listAdminUsers();
     res.json({ practices, borrowers });
   });
+
+  router.get("/borrowers/:id", requireAdminAuth, (req, res, next) => {
+    try {
+      const { id } = idParam.parse(req.params);
+      res.json(getAdminBorrowerDetail(id));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post(
+    "/applications/:applicationId/approve",
+    requireAdminAuth,
+    (req, res, next) => {
+      try {
+        const { applicationId } = applicationIdParam.parse(req.params);
+        const application = adminApproveApplication(applicationId);
+        const practice = getPracticeById(application.practice_id);
+        res.json({
+          application: toPublicApplication(
+            application,
+            practice ? { name: practice.name } : undefined,
+          ),
+        });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  router.post(
+    "/applications/:applicationId/decline",
+    requireAdminAuth,
+    (req, res, next) => {
+      try {
+        const { applicationId } = applicationIdParam.parse(req.params);
+        const application = adminDeclineApplication(applicationId);
+        const practice = getPracticeById(application.practice_id);
+        res.json({
+          application: toPublicApplication(
+            application,
+            practice ? { name: practice.name } : undefined,
+          ),
+        });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
 
   router.post(
     "/users/:type/:id/unlock",

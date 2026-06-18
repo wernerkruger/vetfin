@@ -356,6 +356,8 @@ export function getPracticeStats(practiceId: string) {
          COUNT(*) AS total,
          SUM(CASE WHEN status = 'submitted' AND vet_approved IS NULL THEN 1 ELSE 0 END) AS submitted,
          SUM(CASE WHEN status = 'submitted' AND vet_approved = 1 THEN 1 ELSE 0 END) AS vet_approved,
+         SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) AS funding_approved,
+         SUM(CASE WHEN status = 'declined' THEN 1 ELSE 0 END) AS declined,
          SUM(CASE WHEN status IN (${inProgressList}) THEN 1 ELSE 0 END) AS in_progress
        FROM loan_applications
        WHERE practice_id = ?`,
@@ -364,6 +366,8 @@ export function getPracticeStats(practiceId: string) {
     total: number;
     submitted: number;
     vet_approved: number;
+    funding_approved: number;
+    declined: number;
     in_progress: number;
   };
 
@@ -384,6 +388,8 @@ export function getPracticeStats(practiceId: string) {
     totalApplications: (row.total ?? 0) + legacyCount,
     submitted: row.submitted ?? 0,
     vetApproved: row.vet_approved ?? 0,
+    fundingApproved: row.funding_approved ?? 0,
+    declined: row.declined ?? 0,
     started: (row.in_progress ?? 0) + legacyCount,
   };
 }

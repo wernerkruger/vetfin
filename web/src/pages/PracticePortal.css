@@ -360,6 +360,17 @@
   color: #9a6700;
 }
 
+.portal-badge--approved {
+  background: #e6f4ea;
+  color: #137333;
+}
+
+.portal-badge--declined,
+.portal-badge--cancelled {
+  background: #fce8e6;
+  color: #b42318;
+}
+
 .portal-header--row {
   display: flex;
   flex-wrap: wrap;

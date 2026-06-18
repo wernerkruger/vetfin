@@ -116,6 +116,8 @@ export default function PracticeDashboardPage() {
     totalApplications: 0,
     submitted: 0,
     vetApproved: 0,
+    fundingApproved: 0,
+    declined: 0,
     started: 0,
   });
   const [copied, setCopied] = useState(false);
@@ -243,7 +245,15 @@ export default function PracticeDashboardPage() {
           </div>
           <div className="portal-stat">
             <p className="portal-stat-value">{stats.vetApproved}</p>
-            <p className="portal-stat-label">Vet approved</p>
+            <p className="portal-stat-label">Pending funding</p>
+          </div>
+          <div className="portal-stat">
+            <p className="portal-stat-value">{stats.fundingApproved}</p>
+            <p className="portal-stat-label">Approved</p>
+          </div>
+          <div className="portal-stat">
+            <p className="portal-stat-value">{stats.declined}</p>
+            <p className="portal-stat-label">Declined</p>
           </div>
         </div>
 
