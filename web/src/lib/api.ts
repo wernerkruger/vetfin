@@ -847,12 +847,16 @@ export type AdminProspectClinicsResponse = {
   totalPages: number;
 };
 
-export async function fetchAdminProspectClinics(
-  filters: AdminProspectClinicFilters = {},
-) {
+function prospectClinicQueryParams(
+  filters: AdminProspectClinicFilters,
+  options?: { includePagination?: boolean },
+): URLSearchParams {
   const params = new URLSearchParams();
+  const includePagination = options?.includePagination ?? true;
+
   for (const [key, value] of Object.entries(filters)) {
     if (key === "signedUp") continue;
+    if (!includePagination && (key === "page" || key === "limit")) continue;
     if (value != null && value !== "") {
       params.set(key, String(value));
     }
@@ -860,8 +864,25 @@ export async function fetchAdminProspectClinics(
   if (filters.signedUp === "yes" || filters.signedUp === "no") {
     params.set("signedUp", filters.signedUp);
   }
-  const qs = params.toString();
+  return params;
+}
+
+export async function fetchAdminProspectClinics(
+  filters: AdminProspectClinicFilters = {},
+) {
+  const qs = prospectClinicQueryParams(filters).toString();
   return adminFetch<AdminProspectClinicsResponse>(
     `/api/admin/prospect-clinics${qs ? `?${qs}` : ""}`,
+  );
+}
+
+export async function fetchAdminProspectClinicsExport(
+  filters: AdminProspectClinicFilters = {},
+) {
+  const qs = prospectClinicQueryParams(filters, {
+    includePagination: false,
+  }).toString();
+  return adminFetch<{ clinics: ProspectClinic[]; total: number }>(
+    `/api/admin/prospect-clinics/export${qs ? `?${qs}` : ""}`,
   );
 }

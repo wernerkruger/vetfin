@@ -244,11 +244,10 @@ function likeFilter(column: string, value: string | undefined): {
   return { clause: `LOWER(${column}) LIKE '%' || LOWER(?) || '%'`, param: trimmed };
 }
 
-export function listAdminProspectClinics(filters: ProspectClinicFilters) {
-  const page = Math.max(1, filters.page ?? 1);
-  const limit = Math.min(100, Math.max(1, filters.limit ?? 50));
-  const offset = (page - 1) * limit;
-
+function buildProspectClinicWhere(filters: ProspectClinicFilters): {
+  whereSql: string;
+  params: Array<string | number>;
+} {
   const where: string[] = [];
   const params: Array<string | number> = [];
 
@@ -283,7 +282,17 @@ export function listAdminProspectClinics(filters: ProspectClinicFilters) {
     where.push("signed_up = 0");
   }
 
-  const whereSql = where.length > 0 ? `WHERE ${where.join(" AND ")}` : "";
+  return {
+    whereSql: where.length > 0 ? `WHERE ${where.join(" AND ")}` : "",
+    params,
+  };
+}
+
+export function listAdminProspectClinics(filters: ProspectClinicFilters) {
+  const page = Math.max(1, filters.page ?? 1);
+  const limit = Math.min(100, Math.max(1, filters.limit ?? 50));
+  const offset = (page - 1) * limit;
+  const { whereSql, params } = buildProspectClinicWhere(filters);
 
   const database = getDb();
   const totalRow = database
@@ -306,6 +315,42 @@ export function listAdminProspectClinics(filters: ProspectClinicFilters) {
     page,
     limit,
     totalPages: Math.max(1, Math.ceil((totalRow.n ?? 0) / limit)),
+  };
+}
+
+const EXPORT_ROW_LIMIT = 100_000;
+
+export function exportAdminProspectClinics(
+  filters: Omit<ProspectClinicFilters, "page" | "limit">,
+) {
+  const { whereSql, params } = buildProspectClinicWhere(filters);
+  const database = getDb();
+
+  const totalRow = database
+    .prepare(`SELECT COUNT(*) AS n FROM prospect_clinics ${whereSql}`)
+    .get(...params) as { n: number };
+
+  const total = totalRow.n ?? 0;
+  if (total > EXPORT_ROW_LIMIT) {
+    throw new HttpError(
+      400,
+      `Export is limited to ${EXPORT_ROW_LIMIT.toLocaleString()} rows. Narrow your filters and try again.`,
+    );
+  }
+
+  const rows = database
+    .prepare(
+      `SELECT *
+       FROM prospect_clinics
+       ${whereSql}
+       ORDER BY name
+       LIMIT ?`,
+    )
+    .all(...params, EXPORT_ROW_LIMIT) as ProspectClinicRow[];
+
+  return {
+    clinics: rows.map(toPublicProspectClinic),
+    total,
   };
 }
 

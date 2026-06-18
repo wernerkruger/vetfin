@@ -4,9 +4,16 @@ import AdminNav from "../components/AdminNav";
 import { useAdminAuth } from "../context/AdminAuthContext";
 import {
   fetchAdminProspectClinics,
+  fetchAdminProspectClinicsExport,
   type AdminProspectClinicFilters,
   type ProspectClinic,
 } from "../lib/api";
+import {
+  copyTextToClipboard,
+  downloadTextFile,
+  prospectClinicsToCsv,
+  prospectClinicsToHtml,
+} from "../lib/prospectExport";
 import "./PracticePortal.css";
 
 const FILTER_COLUMNS: Array<{
@@ -58,6 +65,8 @@ export default function AdminProspectClinicsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportMessage, setExportMessage] = useState<string | null>(null);
 
   const load = useCallback(async (activeFilters: AdminProspectClinicFilters) => {
     setLoading(true);
@@ -96,6 +105,62 @@ export default function AdminProspectClinicsPage() {
     setFilters((prev) => ({ ...prev, page }));
   }
 
+  async function loadExportClinics(): Promise<ProspectClinic[]> {
+    const { clinics: exported } = await fetchAdminProspectClinicsExport(filters);
+    return exported;
+  }
+
+  async function handleExport(
+    action: "copy-csv" | "download-csv" | "download-html",
+  ) {
+    setExporting(true);
+    setExportMessage(null);
+    setError(null);
+    try {
+      const exported = await loadExportClinics();
+      if (exported.length === 0) {
+        setExportMessage("No clinics match the current filters.");
+        return;
+      }
+
+      const stamp = new Date().toISOString().slice(0, 10);
+
+      if (action === "copy-csv") {
+        const csv = prospectClinicsToCsv(exported);
+        await copyTextToClipboard(csv);
+        setExportMessage(
+          `Copied ${exported.length.toLocaleString()} clinics to clipboard as CSV.`,
+        );
+        return;
+      }
+
+      if (action === "download-csv") {
+        downloadTextFile(
+          `vetfin-prospect-clinics-${stamp}.csv`,
+          prospectClinicsToCsv(exported),
+          "text/csv;charset=utf-8",
+        );
+        setExportMessage(
+          `Downloaded ${exported.length.toLocaleString()} clinics as CSV.`,
+        );
+        return;
+      }
+
+      downloadTextFile(
+        `vetfin-prospect-clinics-${stamp}.html`,
+        prospectClinicsToHtml(exported),
+        "text/html;charset=utf-8",
+      );
+      setExportMessage(
+        `Downloaded ${exported.length.toLocaleString()} clinics as HTML.`,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Export failed");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <div className="portal">
       <div className="portal-inner portal-inner--prospects">
@@ -120,17 +185,49 @@ export default function AdminProspectClinicsPage() {
 
         <div className="portal-card prospect-card">
           <div className="prospect-toolbar">
-            <button
-              type="button"
-              className="btn btn--secondary btn--small"
-              onClick={clearFilters}
-            >
-              Clear filters
-            </button>
+            <div className="prospect-toolbar__actions">
+              <button
+                type="button"
+                className="btn btn--secondary btn--small"
+                disabled={exporting || loading}
+                onClick={() => void handleExport("copy-csv")}
+              >
+                {exporting ? "Exporting…" : "Copy CSV"}
+              </button>
+              <button
+                type="button"
+                className="btn btn--secondary btn--small"
+                disabled={exporting || loading}
+                onClick={() => void handleExport("download-csv")}
+              >
+                Download CSV
+              </button>
+              <button
+                type="button"
+                className="btn btn--secondary btn--small"
+                disabled={exporting || loading}
+                onClick={() => void handleExport("download-html")}
+              >
+                Download HTML
+              </button>
+              <button
+                type="button"
+                className="btn btn--secondary btn--small"
+                onClick={clearFilters}
+              >
+                Clear filters
+              </button>
+            </div>
             <p className="portal-muted prospect-toolbar__count">
-              {loading ? "Loading…" : `${total.toLocaleString()} clinics`}
+              {loading
+                ? "Loading…"
+                : `${total.toLocaleString()} clinics match filters`}
             </p>
           </div>
+
+          {exportMessage ? (
+            <p className="portal-status">{exportMessage}</p>
+          ) : null}
 
           {error ? <p className="portal-error">{error}</p> : null}
 
