@@ -160,12 +160,12 @@ export function getAdminBiAnalytics(): AdminBiAnalytics {
   const disbursementTotals = database
     .prepare(
       `SELECT
-         COUNT(*) AS disbursed_count,
-         COALESCE(SUM(loan_amount), 0) AS disbursed_amount,
+         SUM(CASE WHEN disbursement_status = 'disbursed' THEN 1 ELSE 0 END) AS disbursed_count,
+         COALESCE(SUM(CASE WHEN disbursement_status = 'disbursed' THEN loan_amount ELSE 0 END), 0) AS disbursed_amount,
          SUM(CASE WHEN disbursement_status = 'pending' THEN 1 ELSE 0 END) AS pending_count,
          COALESCE(SUM(CASE WHEN disbursement_status = 'pending' THEN loan_amount ELSE 0 END), 0) AS pending_amount
        FROM loan_applications
-       WHERE status = 'approved' AND disbursement_status IS NOT NULL`,
+       WHERE disbursement_status IS NOT NULL`,
     )
     .get() as {
     disbursed_count: number;
