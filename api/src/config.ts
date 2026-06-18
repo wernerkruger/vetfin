@@ -15,6 +15,8 @@ const envSchema = z.object({
   PUBLIC_APP_URL: z.string().url().default("http://localhost:5173"),
   ADMIN_USERNAME: z.string().min(1).default("admin"),
   ADMIN_PASSWORD_HASH: z.string().min(1).optional(),
+  // Prefer this in Docker — bcrypt hashes contain $ which Compose env_file mangles.
+  ADMIN_PASSWORD_HASH_B64: z.string().min(1).optional(),
 });
 
 function loadEnv() {
@@ -58,8 +60,20 @@ function loadEnv() {
     jwtSecret: data.JWT_SECRET,
     publicAppUrl: data.PUBLIC_APP_URL,
     adminUsername: data.ADMIN_USERNAME,
-    adminPasswordHash: data.ADMIN_PASSWORD_HASH,
+    adminPasswordHash: resolveAdminPasswordHash(data),
   };
+}
+
+function resolveAdminPasswordHash(
+  data: z.infer<typeof envSchema>,
+): string | undefined {
+  if (data.ADMIN_PASSWORD_HASH) {
+    return data.ADMIN_PASSWORD_HASH;
+  }
+  if (data.ADMIN_PASSWORD_HASH_B64) {
+    return Buffer.from(data.ADMIN_PASSWORD_HASH_B64, "base64").toString("utf8");
+  }
+  return undefined;
 }
 
 export type AppConfig = ReturnType<typeof loadEnv>;
