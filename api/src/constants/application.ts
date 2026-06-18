@@ -102,3 +102,20 @@ export function needsFundingReview(
 ): boolean {
   return status === "submitted" && vetApproved === 1;
 }
+
+export const DISBURSEMENT_STATUSES = ["pending", "disbursed"] as const;
+export type DisbursementStatus = (typeof DISBURSEMENT_STATUSES)[number];
+
+export const DISBURSEMENT_STATUS_LABELS: Record<DisbursementStatus, string> = {
+  pending: "Pending",
+  disbursed: "Disbursed",
+};
+
+export function disbursementStatusLabel(
+  status: string | null | undefined,
+): string | null {
+  if (!status) return null;
+  return (
+    DISBURSEMENT_STATUS_LABELS[status as DisbursementStatus] ?? status
+  );
+}

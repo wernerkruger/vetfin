@@ -430,6 +430,9 @@ export type LoanApplication = {
   termMonthsRemaining: number | null;
   interestRate: number | null;
   approvedAt: string | null;
+  disbursementStatus?: "pending" | "disbursed" | null;
+  disbursementStatusLabel?: string | null;
+  disbursedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -717,4 +720,34 @@ export async function adminDeclineApplication(applicationId: string) {
     `/api/admin/applications/${applicationId}/decline`,
     { method: "POST" },
   );
+}
+
+export type AdminDisbursement = {
+  applicationId: string;
+  customerId: string;
+  borrowerName: string;
+  borrowerEmail: string | null;
+  practiceName: string;
+  loanAmount: number | null;
+  serviceType: string | null;
+  animalName: string | null;
+  animalType: string | null;
+  approvedAt: string | null;
+  disbursementStatus: "pending" | "disbursed";
+  disbursementStatusLabel: string;
+  disbursedAt: string | null;
+  updatedAt: string;
+};
+
+export async function fetchAdminDisbursements() {
+  return adminFetch<{ disbursements: AdminDisbursement[] }>(
+    "/api/admin/disbursements",
+  );
+}
+
+export async function adminMarkDisbursementSent(applicationId: string) {
+  return adminFetch<{
+    disbursement?: AdminDisbursement;
+    application: LoanApplication;
+  }>(`/api/admin/disbursements/${applicationId}/mark-sent`, { method: "POST" });
 }

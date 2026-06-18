@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import AdminNav from "../components/AdminNav";
 import {
   adminApproveApplication,
   adminDeclineApplication,
@@ -188,6 +189,8 @@ export default function AdminBorrowerDetailPage() {
           </p>
         </header>
 
+        <AdminNav active="users" />
+
         <div className="portal-grid portal-grid--stats" style={{ marginBottom: "1.5rem" }}>
           <div className="portal-stat">
             <p className="portal-stat-value">{applications.length}</p>
@@ -224,6 +227,7 @@ export default function AdminBorrowerDetailPage() {
                     <th>Pet</th>
                     <th>Status</th>
                     <th>Clinic review</th>
+                    <th>Disbursement</th>
                     <th>Updated</th>
                     <th>Funding</th>
                   </tr>
@@ -241,6 +245,17 @@ export default function AdminBorrowerDetailPage() {
                         </span>
                       </td>
                       <td>{app.practiceStatusLabel}</td>
+                      <td>
+                        {app.disbursementStatusLabel ? (
+                          <span
+                            className={`portal-badge portal-badge--disbursement-${app.disbursementStatus}`}
+                          >
+                            {app.disbursementStatusLabel}
+                          </span>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
                       <td>{new Date(app.updatedAt).toLocaleDateString()}</td>
                       <td>
                         <ApplicationActions

@@ -3,12 +3,14 @@ import {
   ANIMAL_TYPES,
   APPLICATION_STATUSES,
   borrowerStatusLabel,
+  disbursementStatusLabel,
   IN_PROGRESS_STATUSES,
   loanTermsVisible,
   practiceStatusLabel,
   SERVICE_TYPES,
   type AnimalType,
   type ApplicationStatus,
+  type DisbursementStatus,
   type ServiceType,
   type VetApprovedValue,
 } from "../constants/application.js";
@@ -34,6 +36,8 @@ export type LoanApplicationRow = {
   approved_at: string | null;
   vet_approved: number | null;
   vet_reviewed_at: string | null;
+  disbursement_status: string | null;
+  disbursed_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -79,6 +83,9 @@ export function toPublicApplication(
     termMonthsRemaining: showTerms ? row.term_months_remaining : null,
     interestRate: showTerms ? row.interest_rate : null,
     approvedAt: showTerms ? row.approved_at : null,
+    disbursementStatus: row.disbursement_status as DisbursementStatus | null,
+    disbursementStatusLabel: disbursementStatusLabel(row.disbursement_status),
+    disbursedAt: row.disbursed_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -393,7 +400,10 @@ export function adminApproveApplication(applicationId: string): LoanApplicationR
   database
     .prepare(
       `UPDATE loan_applications
-       SET status = 'approved', approved_at = datetime('now'), updated_at = datetime('now')
+       SET status = 'approved',
+           approved_at = datetime('now'),
+           disbursement_status = 'pending',
+           updated_at = datetime('now')
        WHERE id = ?`,
     )
     .run(applicationId);
@@ -461,6 +471,125 @@ export function listApplicationsForAdmin(customerId: string) {
       canDeclineFunding: row.status === "submitted" && vetApproved === 1,
     };
   });
+}
+
+export type AdminDisbursementRow = {
+  applicationId: string;
+  customerId: string;
+  borrowerName: string;
+  borrowerEmail: string | null;
+  practiceName: string;
+  loanAmount: number | null;
+  serviceType: string | null;
+  animalName: string | null;
+  animalType: string | null;
+  approvedAt: string | null;
+  disbursementStatus: DisbursementStatus;
+  disbursementStatusLabel: string;
+  disbursedAt: string | null;
+  updatedAt: string;
+};
+
+export function listAdminDisbursements(): AdminDisbursementRow[] {
+  const rows = getDb()
+    .prepare(
+      `SELECT
+         la.id AS application_id,
+         la.customer_id,
+         la.loan_amount,
+         la.service_type,
+         la.animal_name,
+         la.animal_type,
+         la.approved_at,
+         la.disbursement_status,
+         la.disbursed_at,
+         la.updated_at,
+         vp.name AS practice_name,
+         c.email AS borrower_email,
+         c.applicant_name,
+         c.first_name,
+         c.last_name
+       FROM loan_applications la
+       INNER JOIN vet_practices vp ON vp.id = la.practice_id
+       INNER JOIN customers c ON c.id = la.customer_id
+       WHERE la.status = 'approved'
+         AND la.disbursement_status IS NOT NULL
+       ORDER BY
+         CASE la.disbursement_status WHEN 'pending' THEN 0 ELSE 1 END,
+         la.approved_at DESC`,
+    )
+    .all() as Array<{
+    application_id: string;
+    customer_id: string;
+    loan_amount: number | null;
+    service_type: string | null;
+    animal_name: string | null;
+    animal_type: string | null;
+    approved_at: string | null;
+    disbursement_status: string;
+    disbursed_at: string | null;
+    updated_at: string;
+    practice_name: string;
+    borrower_email: string | null;
+    applicant_name: string | null;
+    first_name: string | null;
+    last_name: string | null;
+  }>;
+
+  return rows.map((row) => {
+    const borrowerName =
+      row.applicant_name?.trim() ||
+      [row.first_name, row.last_name].filter(Boolean).join(" ") ||
+      row.borrower_email ||
+      "Borrower";
+
+    const status = row.disbursement_status as DisbursementStatus;
+
+    return {
+      applicationId: row.application_id,
+      customerId: row.customer_id,
+      borrowerName,
+      borrowerEmail: row.borrower_email,
+      practiceName: row.practice_name,
+      loanAmount: row.loan_amount,
+      serviceType: row.service_type,
+      animalName: row.animal_name,
+      animalType: row.animal_type,
+      approvedAt: row.approved_at,
+      disbursementStatus: status,
+      disbursementStatusLabel: disbursementStatusLabel(status) ?? status,
+      disbursedAt: row.disbursed_at,
+      updatedAt: row.updated_at,
+    };
+  });
+}
+
+/** Mark funds as sent. Callable manually now; future automation can use the same path. */
+export function adminMarkDisbursementSent(
+  applicationId: string,
+): LoanApplicationRow {
+  const app = getApplicationById(applicationId);
+  if (!app) {
+    throw new HttpError(404, "Application not found");
+  }
+  if (app.status !== "approved") {
+    throw new HttpError(400, "Only fully approved loans can be disbursed");
+  }
+  if (app.disbursement_status !== "pending") {
+    throw new HttpError(400, "This disbursement is not pending");
+  }
+
+  getDb()
+    .prepare(
+      `UPDATE loan_applications
+       SET disbursement_status = 'disbursed',
+           disbursed_at = datetime('now'),
+           updated_at = datetime('now')
+       WHERE id = ?`,
+    )
+    .run(applicationId);
+
+  return getApplicationById(applicationId)!;
 }
 
 export function listLoansForBorrower(customerId: string) {

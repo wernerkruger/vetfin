@@ -61,6 +61,8 @@ CREATE TABLE IF NOT EXISTS loan_applications (
   approved_at TEXT,
   vet_approved INTEGER,
   vet_reviewed_at TEXT,
+  disbursement_status TEXT,
+  disbursed_at TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

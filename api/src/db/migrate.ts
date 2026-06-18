@@ -204,4 +204,20 @@ export function runMigrations(database: Database.Database): void {
       );
     }
   }
+
+  if (!columnExists(database, "loan_applications", "disbursement_status")) {
+    database.exec(
+      "ALTER TABLE loan_applications ADD COLUMN disbursement_status TEXT",
+    );
+  }
+  if (!columnExists(database, "loan_applications", "disbursed_at")) {
+    database.exec("ALTER TABLE loan_applications ADD COLUMN disbursed_at TEXT");
+  }
+
+  database.exec(`
+    UPDATE loan_applications
+    SET disbursement_status = 'pending'
+    WHERE status = 'approved'
+      AND disbursement_status IS NULL
+  `);
 }

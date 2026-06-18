@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import AdminNav from "../components/AdminNav";
 import { useAdminAuth } from "../context/AdminAuthContext";
 import {
   adminResetUserPassword,
@@ -195,6 +196,8 @@ export default function AdminDashboardPage() {
             Log out
           </button>
         </header>
+
+        <AdminNav active="users" />
 
         {temporaryPassword ? (
           <div className="portal-card portal-card--highlight">

@@ -7,6 +7,7 @@ import { BorrowerAuthProvider } from "./context/BorrowerAuthContext";
 import { PracticeAuthProvider } from "./context/PracticeAuthContext";
 import AdminBorrowerDetailPage from "./pages/AdminBorrowerDetailPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
+import AdminDisbursementsPage from "./pages/AdminDisbursementsPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import ApplyPage from "./pages/ApplyPage";
 import BorrowerApplyPage from "./pages/BorrowerApplyPage";
@@ -39,6 +40,10 @@ export default function App() {
                 <Route
                   path="/admin/borrowers/:id"
                   element={<AdminBorrowerDetailPage />}
+                />
+                <Route
+                  path="/admin/disbursements"
+                  element={<AdminDisbursementsPage />}
                 />
               </Route>
               <Route element={<ProtectedPracticeRoute />}>

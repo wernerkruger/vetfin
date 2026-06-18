@@ -7,6 +7,8 @@ import { adminResetUserPassword, adminUnlockUser, getAdminBorrowerDetail, listAd
 import {
   adminApproveApplication,
   adminDeclineApplication,
+  adminMarkDisbursementSent,
+  listAdminDisbursements,
   toPublicApplication,
 } from "../db/applications.js";
 import { getPracticeById } from "../db/practices.js";
@@ -106,6 +108,33 @@ export function adminRouter(): Router {
         const application = adminDeclineApplication(applicationId);
         const practice = getPracticeById(application.practice_id);
         res.json({
+          application: toPublicApplication(
+            application,
+            practice ? { name: practice.name } : undefined,
+          ),
+        });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  router.get("/disbursements", requireAdminAuth, (_req, res) => {
+    res.json({ disbursements: listAdminDisbursements() });
+  });
+
+  router.post(
+    "/disbursements/:applicationId/mark-sent",
+    requireAdminAuth,
+    (req, res, next) => {
+      try {
+        const { applicationId } = applicationIdParam.parse(req.params);
+        const application = adminMarkDisbursementSent(applicationId);
+        const practice = getPracticeById(application.practice_id);
+        res.json({
+          disbursement: listAdminDisbursements().find(
+            (d) => d.applicationId === applicationId,
+          ),
           application: toPublicApplication(
             application,
             practice ? { name: practice.name } : undefined,
