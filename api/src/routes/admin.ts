@@ -4,6 +4,7 @@ import { signAdminToken } from "../auth/jwt.js";
 import { getConfig } from "../config.js";
 import { verifyPassword } from "../crypto/password.js";
 import { adminResetUserPassword, adminUnlockUser, getAdminBorrowerDetail, listAdminUsers } from "../db/admin.js";
+import { getAdminBiAnalytics } from "../db/bi.js";
 import {
   adminApproveApplication,
   adminDeclineApplication,
@@ -121,6 +122,10 @@ export function adminRouter(): Router {
 
   router.get("/disbursements", requireAdminAuth, (_req, res) => {
     res.json({ disbursements: listAdminDisbursements() });
+  });
+
+  router.get("/bi", requireAdminAuth, (_req, res) => {
+    res.json(getAdminBiAnalytics());
   });
 
   router.post(

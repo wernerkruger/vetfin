@@ -584,6 +584,7 @@ export function adminMarkDisbursementSent(
       `UPDATE loan_applications
        SET disbursement_status = 'disbursed',
            disbursed_at = datetime('now'),
+           status = 'active',
            updated_at = datetime('now')
        WHERE id = ?`,
     )

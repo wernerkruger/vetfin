@@ -751,3 +751,46 @@ export async function adminMarkDisbursementSent(applicationId: string) {
     application: LoanApplication;
   }>(`/api/admin/disbursements/${applicationId}/mark-sent`, { method: "POST" });
 }
+
+export type AdminBiMonthlyCount = { month: string; count: number };
+export type AdminBiMonthlyAmount = { month: string; amount: number; count: number };
+export type AdminBiRepaymentBucket =
+  | "paid_off"
+  | "on_time"
+  | "behind"
+  | "pending_first";
+
+export type AdminBiAnalytics = {
+  generatedAt: string;
+  practices: {
+    total: number;
+    monthlySignups: AdminBiMonthlyCount[];
+    monthOverMonthGrowthPct: number | null;
+  };
+  borrowers: {
+    total: number;
+    totalWithLogin: number;
+    monthlySignups: AdminBiMonthlyCount[];
+    monthOverMonthGrowthPct: number | null;
+  };
+  disbursements: {
+    totalAmount: number;
+    totalCount: number;
+    pendingAmount: number;
+    pendingCount: number;
+    monthly: AdminBiMonthlyAmount[];
+    monthOverMonthGrowthPct: number | null;
+  };
+  repayments: {
+    totalActiveLoans: number;
+    byCount: Record<AdminBiRepaymentBucket, number>;
+    byOutstandingPrincipal: Record<AdminBiRepaymentBucket, number>;
+    delinquentAmount: number;
+    countSharePct: Record<AdminBiRepaymentBucket, number>;
+    principalSharePct: Record<AdminBiRepaymentBucket, number>;
+  };
+};
+
+export async function fetchAdminBi() {
+  return adminFetch<AdminBiAnalytics>("/api/admin/bi");
+}

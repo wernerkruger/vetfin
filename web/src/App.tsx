@@ -5,6 +5,7 @@ import ProtectedPracticeRoute from "./components/ProtectedPracticeRoute";
 import { AdminAuthProvider } from "./context/AdminAuthContext";
 import { BorrowerAuthProvider } from "./context/BorrowerAuthContext";
 import { PracticeAuthProvider } from "./context/PracticeAuthContext";
+import AdminBiPage from "./pages/AdminBiPage";
 import AdminBorrowerDetailPage from "./pages/AdminBorrowerDetailPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminDisbursementsPage from "./pages/AdminDisbursementsPage";
@@ -45,6 +46,7 @@ export default function App() {
                   path="/admin/disbursements"
                   element={<AdminDisbursementsPage />}
                 />
+                <Route path="/admin/bi" element={<AdminBiPage />} />
               </Route>
               <Route element={<ProtectedPracticeRoute />}>
                 <Route
