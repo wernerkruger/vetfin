@@ -220,4 +220,37 @@ export function runMigrations(database: Database.Database): void {
     WHERE status = 'approved'
       AND disbursement_status IS NULL
   `);
+
+  if (!tableExists(database, "prospect_clinics")) {
+    database.exec(`
+      CREATE TABLE prospect_clinics (
+        id TEXT PRIMARY KEY,
+        category TEXT,
+        name TEXT NOT NULL,
+        address TEXT,
+        city TEXT,
+        state TEXT,
+        state_short TEXT,
+        phone TEXT,
+        website TEXT,
+        rating REAL,
+        source_url TEXT,
+        email TEXT,
+        signed_up INTEGER NOT NULL DEFAULT 0,
+        practice_id TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      CREATE INDEX IF NOT EXISTS idx_prospect_clinics_name ON prospect_clinics(name);
+      CREATE INDEX IF NOT EXISTS idx_prospect_clinics_signed_up ON prospect_clinics(signed_up);
+      CREATE INDEX IF NOT EXISTS idx_prospect_clinics_city ON prospect_clinics(city);
+      CREATE INDEX IF NOT EXISTS idx_prospect_clinics_state_short ON prospect_clinics(state_short);
+    `);
+  }
+
+  if (!columnExists(database, "vet_practices", "prospect_clinic_id")) {
+    database.exec(
+      "ALTER TABLE vet_practices ADD COLUMN prospect_clinic_id TEXT",
+    );
+  }
 }

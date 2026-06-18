@@ -12,6 +12,7 @@ RUN npm ci
 
 COPY tsconfig.json ./
 COPY src ./src
+COPY data ./data
 RUN npm run build
 
 FROM node:22-bookworm-slim AS runtime
@@ -31,6 +32,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm rebuild better-sqlite3
 
 COPY --from=build /app/dist ./dist
+COPY data/wowvets_clinics.csv ./dist/data/wowvets_clinics.csv
 
 RUN mkdir -p /data && chown -R node:node /data /app
 

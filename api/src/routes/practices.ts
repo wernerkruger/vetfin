@@ -12,6 +12,7 @@ import {
   loginPractice,
   toPublicPractice,
 } from "../db/practices.js";
+import { searchProspectClinics } from "../db/prospectClinics.js";
 import {
   getPracticeAuth,
   requirePracticeAuth,
@@ -28,6 +29,7 @@ const signupBody = z.object({
   city: z.string().max(80).optional(),
   state: z.string().max(2).optional(),
   zip: z.string().max(12).optional(),
+  prospectClinicId: z.string().min(1).max(40).optional(),
 });
 
 const loginBody = z.object({
@@ -42,6 +44,16 @@ const changePasswordBody = z.object({
 
 export function practicesRouter(): Router {
   const router = Router();
+
+  router.get("/prospect-clinics/search", (req, res, next) => {
+    try {
+      const q = typeof req.query.q === "string" ? req.query.q : "";
+      const clinics = searchProspectClinics(q, 10);
+      res.json({ clinics });
+    } catch (err) {
+      next(err);
+    }
+  });
 
   router.post("/signup", async (req, res, next) => {
     try {

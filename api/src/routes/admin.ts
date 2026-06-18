@@ -5,6 +5,7 @@ import { getConfig } from "../config.js";
 import { verifyPassword } from "../crypto/password.js";
 import { adminResetUserPassword, adminUnlockUser, getAdminBorrowerDetail, listAdminUsers } from "../db/admin.js";
 import { getAdminBiAnalytics } from "../db/bi.js";
+import { listAdminProspectClinics } from "../db/prospectClinics.js";
 import {
   adminApproveApplication,
   adminDeclineApplication,
@@ -126,6 +127,48 @@ export function adminRouter(): Router {
 
   router.get("/bi", requireAdminAuth, (_req, res) => {
     res.json(getAdminBiAnalytics());
+  });
+
+  router.get("/prospect-clinics", requireAdminAuth, (req, res, next) => {
+    try {
+      const signedUpRaw =
+        typeof req.query.signedUp === "string" ? req.query.signedUp : "all";
+      const signedUp =
+        signedUpRaw === "yes" || signedUpRaw === "no" ? signedUpRaw : "all";
+
+      res.json(
+        listAdminProspectClinics({
+          category:
+            typeof req.query.category === "string"
+              ? req.query.category
+              : undefined,
+          name: typeof req.query.name === "string" ? req.query.name : undefined,
+          address:
+            typeof req.query.address === "string" ? req.query.address : undefined,
+          city: typeof req.query.city === "string" ? req.query.city : undefined,
+          state: typeof req.query.state === "string" ? req.query.state : undefined,
+          stateShort:
+            typeof req.query.stateShort === "string"
+              ? req.query.stateShort
+              : undefined,
+          phone: typeof req.query.phone === "string" ? req.query.phone : undefined,
+          website:
+            typeof req.query.website === "string" ? req.query.website : undefined,
+          rating:
+            typeof req.query.rating === "string" ? req.query.rating : undefined,
+          sourceUrl:
+            typeof req.query.sourceUrl === "string"
+              ? req.query.sourceUrl
+              : undefined,
+          email: typeof req.query.email === "string" ? req.query.email : undefined,
+          signedUp,
+          page: req.query.page ? Number(req.query.page) : 1,
+          limit: req.query.limit ? Number(req.query.limit) : 50,
+        }),
+      );
+    } catch (err) {
+      next(err);
+    }
   });
 
   router.post(

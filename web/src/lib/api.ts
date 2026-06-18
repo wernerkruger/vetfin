@@ -302,6 +302,26 @@ export type PracticeSignupInput = {
   city?: string;
   state?: string;
   zip?: string;
+  prospectClinicId?: string;
+};
+
+export type ProspectClinic = {
+  id: string;
+  category: string | null;
+  name: string;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  stateShort: string | null;
+  phone: string | null;
+  website: string | null;
+  rating: number | null;
+  sourceUrl: string | null;
+  email: string | null;
+  signedUp: boolean;
+  practiceId: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 function practiceFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -317,6 +337,13 @@ export async function practiceSignup(input: PracticeSignupInput) {
     method: "POST",
     body: JSON.stringify(input),
   });
+}
+
+export async function searchProspectClinics(query: string) {
+  const params = new URLSearchParams({ q: query });
+  return apiFetch<{ clinics: ProspectClinic[] }>(
+    `/api/practices/prospect-clinics/search?${params}`,
+  );
 }
 
 export async function practiceLogin(email: string, password: string) {
@@ -793,4 +820,44 @@ export type AdminBiAnalytics = {
 
 export async function fetchAdminBi() {
   return adminFetch<AdminBiAnalytics>("/api/admin/bi");
+}
+
+export type AdminProspectClinicFilters = {
+  category?: string;
+  name?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  stateShort?: string;
+  phone?: string;
+  website?: string;
+  rating?: string;
+  sourceUrl?: string;
+  email?: string;
+  signedUp?: "yes" | "no" | "all";
+  page?: number;
+  limit?: number;
+};
+
+export type AdminProspectClinicsResponse = {
+  clinics: ProspectClinic[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+};
+
+export async function fetchAdminProspectClinics(
+  filters: AdminProspectClinicFilters = {},
+) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (value != null && value !== "") {
+      params.set(key, String(value));
+    }
+  }
+  const qs = params.toString();
+  return adminFetch<AdminProspectClinicsResponse>(
+    `/api/admin/prospect-clinics${qs ? `?${qs}` : ""}`,
+  );
 }

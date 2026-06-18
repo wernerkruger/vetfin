@@ -15,6 +15,7 @@ import { signPracticeToken } from "../auth/jwt.js";
 import { hashPassword, verifyPassword } from "../crypto/password.js";
 import { HttpError } from "../errors.js";
 import { slugifyName, randomSlugSuffix } from "../utils/slug.js";
+import { linkProspectClinicToPractice } from "./prospectClinics.js";
 import { getDb } from "./connection.js";
 
 export type VetPracticeRow = {
@@ -46,6 +47,7 @@ export type PracticeSignupInput = {
   city?: string;
   state?: string;
   zip?: string;
+  prospectClinicId?: string;
 };
 
 function uniqueSlug(base: string): string {
@@ -103,6 +105,10 @@ export async function createVetPractice(
       throw error;
     }
     throw err;
+  }
+
+  if (input.prospectClinicId) {
+    linkProspectClinicToPractice(input.prospectClinicId, id);
   }
 
   return database

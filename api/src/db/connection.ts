@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { getConfig } from "../config.js";
 import { runMigrations } from "./migrate.js";
+import { importProspectClinicsIfEmpty } from "./prospectClinics.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -26,6 +27,7 @@ export function getDb(): Database.Database {
   );
   db.exec(schema);
   runMigrations(db);
+  importProspectClinicsIfEmpty();
 
   return db;
 }

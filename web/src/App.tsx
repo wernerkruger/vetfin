@@ -9,6 +9,7 @@ import AdminBiPage from "./pages/AdminBiPage";
 import AdminBorrowerDetailPage from "./pages/AdminBorrowerDetailPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminDisbursementsPage from "./pages/AdminDisbursementsPage";
+import AdminProspectClinicsPage from "./pages/AdminProspectClinicsPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import ApplyPage from "./pages/ApplyPage";
 import BorrowerApplyPage from "./pages/BorrowerApplyPage";
@@ -47,6 +48,10 @@ export default function App() {
                   element={<AdminDisbursementsPage />}
                 />
                 <Route path="/admin/bi" element={<AdminBiPage />} />
+                <Route
+                  path="/admin/clinics"
+                  element={<AdminProspectClinicsPage />}
+                />
               </Route>
               <Route element={<ProtectedPracticeRoute />}>
                 <Route

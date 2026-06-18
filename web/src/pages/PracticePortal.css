@@ -542,3 +542,134 @@
 .bi-repayment-block {
   margin-top: 1rem;
 }
+
+.clinic-autocomplete {
+  position: relative;
+}
+
+.clinic-autocomplete__list {
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  right: 0;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--color-border, #ddd);
+  border-radius: 0.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  max-height: 16rem;
+  overflow-y: auto;
+}
+
+.clinic-autocomplete__option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.clinic-autocomplete__option:hover,
+.clinic-autocomplete__option:focus-visible {
+  background: var(--color-cream, #f7f4ef);
+}
+
+.clinic-autocomplete__option span {
+  font-size: 0.8125rem;
+  color: var(--color-ink-muted);
+}
+
+.clinic-autocomplete__hint,
+.clinic-autocomplete__confirmed {
+  margin: 0.35rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-ink-muted);
+}
+
+.clinic-confirm {
+  margin-top: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.5rem;
+  background: var(--color-cream, #f7f4ef);
+}
+
+.clinic-confirm__title {
+  margin: 0 0 0.35rem;
+  font-weight: 600;
+}
+
+.clinic-confirm__name {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.clinic-confirm__meta {
+  margin: 0.2rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-ink-muted);
+}
+
+.clinic-confirm__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.prospect-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: end;
+  margin-bottom: 1rem;
+}
+
+.prospect-toolbar__status {
+  min-width: 10rem;
+}
+
+.prospect-toolbar__count {
+  margin: 0;
+  margin-left: auto;
+}
+
+.prospect-table-wrap {
+  overflow-x: auto;
+}
+
+.prospect-table {
+  min-width: 110rem;
+}
+
+.prospect-filter-row th {
+  padding-top: 0.35rem;
+  padding-bottom: 0.75rem;
+  vertical-align: top;
+}
+
+.prospect-filter-input {
+  width: 100%;
+  min-width: 6rem;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.prospect-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.portal-badge--muted {
+  background: #f1f3f4;
+  color: #5f6368;
+}

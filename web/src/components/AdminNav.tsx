@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 type AdminNavProps = {
-  active: "users" | "disbursements" | "bi";
+  active: "users" | "disbursements" | "bi" | "clinics";
 };
 
 export default function AdminNav({ active }: AdminNavProps) {
@@ -24,6 +24,12 @@ export default function AdminNav({ active }: AdminNavProps) {
         className={`admin-nav__link${active === "bi" ? " admin-nav__link--active" : ""}`}
       >
         Business intelligence
+      </Link>
+      <Link
+        to="/admin/clinics"
+        className={`admin-nav__link${active === "clinics" ? " admin-nav__link--active" : ""}`}
+      >
+        Prospect clinics
       </Link>
     </nav>
   );

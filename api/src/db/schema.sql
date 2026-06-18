@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS vet_practices (
   city TEXT,
   state TEXT,
   zip TEXT,
+  prospect_clinic_id TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -120,6 +121,30 @@ CREATE TABLE IF NOT EXISTS bank_transactions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_vet_practices_slug ON vet_practices(slug);
+
+CREATE TABLE IF NOT EXISTS prospect_clinics (
+  id TEXT PRIMARY KEY,
+  category TEXT,
+  name TEXT NOT NULL,
+  address TEXT,
+  city TEXT,
+  state TEXT,
+  state_short TEXT,
+  phone TEXT,
+  website TEXT,
+  rating REAL,
+  source_url TEXT,
+  email TEXT,
+  signed_up INTEGER NOT NULL DEFAULT 0,
+  practice_id TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_prospect_clinics_name ON prospect_clinics(name);
+CREATE INDEX IF NOT EXISTS idx_prospect_clinics_signed_up ON prospect_clinics(signed_up);
+CREATE INDEX IF NOT EXISTS idx_prospect_clinics_city ON prospect_clinics(city);
+CREATE INDEX IF NOT EXISTS idx_prospect_clinics_state_short ON prospect_clinics(state_short);
 -- idx_customers_practice is created in migrate.ts after practice_id column exists
 CREATE INDEX IF NOT EXISTS idx_plaid_items_customer ON plaid_items(customer_id);
 -- bank_accounts / bank_transactions customer_id indexes created in migrate.ts

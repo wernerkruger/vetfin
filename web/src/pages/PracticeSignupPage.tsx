@@ -1,17 +1,46 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import PracticeNameAutocomplete from "../components/PracticeNameAutocomplete";
 import { usePracticeAuth } from "../context/PracticeAuthContext";
+import type { ProspectClinic } from "../lib/api";
 import "./PracticePortal.css";
 
 export default function PracticeSignupPage() {
   const navigate = useNavigate();
   const { signup } = usePracticeAuth();
+  const formRef = useRef<HTMLFormElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [practiceName, setPracticeName] = useState("");
+  const [selectedClinic, setSelectedClinic] = useState<ProspectClinic | null>(
+    null,
+  );
+  const [clinicConfirmed, setClinicConfirmed] = useState(false);
+
+  function prefillFromClinic(clinic: ProspectClinic) {
+    const form = formRef.current;
+    if (!form) return;
+
+    const setField = (name: string, value: string | null | undefined) => {
+      const input = form.elements.namedItem(name) as HTMLInputElement | null;
+      if (input && value) input.value = value;
+    };
+
+    setField("addressLine1", clinic.address);
+    setField("city", clinic.city);
+    setField("state", clinic.stateShort);
+    setField("phone", clinic.phone);
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+
+    if (selectedClinic && !clinicConfirmed) {
+      setError("Please confirm whether the suggested clinic is your practice.");
+      return;
+    }
+
     setSubmitting(true);
 
     const form = new FormData(e.currentTarget);
@@ -26,6 +55,8 @@ export default function PracticeSignupPage() {
         city: String(form.get("city") ?? "") || undefined,
         state: String(form.get("state") ?? "") || undefined,
         zip: String(form.get("zip") ?? "") || undefined,
+        prospectClinicId:
+          clinicConfirmed && selectedClinic ? selectedClinic.id : undefined,
       });
       navigate("/practice/dashboard", { replace: true });
     } catch (err) {
@@ -50,10 +81,18 @@ export default function PracticeSignupPage() {
         </header>
 
         <div className="portal-card">
-          <form className="portal-form" onSubmit={handleSubmit}>
+          <form ref={formRef} className="portal-form" onSubmit={handleSubmit}>
             <label className="portal-label">
               Practice name
-              <input name="name" required minLength={2} autoComplete="organization" />
+              <PracticeNameAutocomplete
+                value={practiceName}
+                onValueChange={setPracticeName}
+                selectedClinic={selectedClinic}
+                onSelectClinic={setSelectedClinic}
+                confirmed={clinicConfirmed}
+                onConfirm={setClinicConfirmed}
+                onPrefill={prefillFromClinic}
+              />
             </label>
             <label className="portal-label">
               Your name
