@@ -81,7 +81,10 @@ export default function AdminProspectClinicsPage() {
     return () => window.clearTimeout(handle);
   }, [filters, load]);
 
-  function updateFilter(key: keyof AdminProspectClinicFilters, value: string) {
+  function updateFilter(
+    key: keyof AdminProspectClinicFilters,
+    value: string | number,
+  ) {
     setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
   }
 
@@ -95,7 +98,7 @@ export default function AdminProspectClinicsPage() {
 
   return (
     <div className="portal">
-      <div className="portal-inner portal-inner--wide">
+      <div className="portal-inner portal-inner--prospects">
         <header className="portal-header portal-header--row">
           <div>
             <Link to="/" className="portal-back">
@@ -115,21 +118,8 @@ export default function AdminProspectClinicsPage() {
 
         <AdminNav active="clinics" />
 
-        <div className="portal-card">
+        <div className="portal-card prospect-card">
           <div className="prospect-toolbar">
-            <label className="portal-label prospect-toolbar__status">
-              Status
-              <select
-                value={filters.signedUp ?? "all"}
-                onChange={(e) =>
-                  updateFilter("signedUp", e.target.value)
-                }
-              >
-                <option value="all">All clinics</option>
-                <option value="no">Prospects only</option>
-                <option value="yes">Signed up only</option>
-              </select>
-            </label>
             <button
               type="button"
               className="btn btn--secondary btn--small"
@@ -154,7 +144,22 @@ export default function AdminProspectClinicsPage() {
                   ))}
                 </tr>
                 <tr className="prospect-filter-row">
-                  <th />
+                  <th>
+                    <select
+                      className="prospect-filter-input"
+                      value={filters.signedUp ?? "all"}
+                      onChange={(e) =>
+                        updateFilter(
+                          "signedUp",
+                          e.target.value as "yes" | "no" | "all",
+                        )
+                      }
+                    >
+                      <option value="all">All</option>
+                      <option value="no">Prospect</option>
+                      <option value="yes">Signed up</option>
+                    </select>
+                  </th>
                   {FILTER_COLUMNS.map((col) => (
                     <th key={col.key}>
                       <input

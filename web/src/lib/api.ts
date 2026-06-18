@@ -852,9 +852,13 @@ export async function fetchAdminProspectClinics(
 ) {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(filters)) {
+    if (key === "signedUp") continue;
     if (value != null && value !== "") {
       params.set(key, String(value));
     }
+  }
+  if (filters.signedUp === "yes" || filters.signedUp === "no") {
+    params.set("signedUp", filters.signedUp);
   }
   const qs = params.toString();
   return adminFetch<AdminProspectClinicsResponse>(
