@@ -24,7 +24,7 @@ type PracticeAuthContextValue = {
   practice: VetPractice | null;
   referralUrl: string | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<string>;
   signup: (input: PracticeSignupInput) => Promise<void>;
   logout: () => void;
   refresh: () => Promise<void>;
@@ -70,6 +70,12 @@ export function PracticeAuthProvider({ children }: { children: ReactNode }) {
     setPracticeToken(result.token);
     setPractice(result.practice);
     setReferralUrl(result.referralUrl);
+    return (
+      result.redirectTo ??
+      (result.mustChangePassword
+        ? "/practice/change-password"
+        : "/practice/dashboard")
+    );
   }, []);
 
   const signup = useCallback(async (input: PracticeSignupInput) => {

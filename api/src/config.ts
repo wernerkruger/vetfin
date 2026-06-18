@@ -13,6 +13,8 @@ const envSchema = z.object({
     "dev-only-change-me-vetfin-jwt-secret-32chars",
   ),
   PUBLIC_APP_URL: z.string().url().default("http://localhost:5173"),
+  ADMIN_USERNAME: z.string().min(1).default("admin"),
+  ADMIN_PASSWORD_HASH: z.string().min(1).optional(),
 });
 
 function loadEnv() {
@@ -55,6 +57,8 @@ function loadEnv() {
     dataEncryptionKey: data.DATA_ENCRYPTION_KEY,
     jwtSecret: data.JWT_SECRET,
     publicAppUrl: data.PUBLIC_APP_URL,
+    adminUsername: data.ADMIN_USERNAME,
+    adminPasswordHash: data.ADMIN_PASSWORD_HASH,
   };
 }
 

@@ -1,6 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { signBorrowerToken } from "../auth/jwt.js";
+import {
+  assertAccountCanLogin,
+  clearLoginAttempts,
+  recordFailedLogin,
+} from "../auth/loginSecurity.js";
+import { INVALID_CREDENTIALS_MESSAGE } from "../constants/auth.js";
 import { hashPassword, verifyPassword } from "../crypto/password.js";
+import { HttpError } from "../errors.js";
 import { getDb } from "./connection.js";
 import { protectSecret } from "./store.js";
 
@@ -9,6 +16,9 @@ export type BorrowerRow = {
   client_user_id: string;
   email: string | null;
   password_hash: string | null;
+  failed_login_attempts: number;
+  locked_at: string | null;
+  must_change_password: number;
   applicant_name: string | null;
   first_name: string | null;
   last_name: string | null;
@@ -54,6 +64,9 @@ export function toPublicBorrower(row: BorrowerRow) {
     city: row.city,
     state: row.state,
     zip: row.zip,
+    mustChangePassword: row.must_change_password === 1,
+    isLocked: row.locked_at !== null,
+    failedLoginAttempts: row.failed_login_attempts,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -139,26 +152,59 @@ export async function registerBorrower(input: {
 export async function loginBorrower(
   email: string,
   password: string,
-): Promise<{ borrower: BorrowerRow; token: string }> {
+): Promise<{ borrower: BorrowerRow; token: string; mustChangePassword: boolean }> {
   const borrower = getBorrowerByEmail(email);
   if (!borrower?.password_hash) {
-    const error = new Error("Invalid email or password");
-    (error as Error & { status: number }).status = 401;
-    throw error;
+    throw new HttpError(401, INVALID_CREDENTIALS_MESSAGE);
   }
+
+  assertAccountCanLogin(borrower);
 
   const valid = await verifyPassword(password, borrower.password_hash);
   if (!valid) {
-    const error = new Error("Invalid email or password");
-    (error as Error & { status: number }).status = 401;
-    throw error;
+    recordFailedLogin("customers", borrower.id, borrower.failed_login_attempts);
   }
 
+  clearLoginAttempts("customers", borrower.id);
+  const refreshed = getBorrowerById(borrower.id)!;
   const token = await signBorrowerToken({
-    sub: borrower.id,
-    email: borrower.email ?? email,
+    sub: refreshed.id,
+    email: refreshed.email ?? email,
   });
-  return { borrower, token };
+  return {
+    borrower: refreshed,
+    token,
+    mustChangePassword: refreshed.must_change_password === 1,
+  };
+}
+
+export async function changeBorrowerPassword(
+  customerId: string,
+  currentPassword: string,
+  newPassword: string,
+): Promise<BorrowerRow> {
+  const borrower = getBorrowerById(customerId);
+  if (!borrower?.password_hash) {
+    throw new HttpError(404, "Account not found");
+  }
+
+  const valid = await verifyPassword(currentPassword, borrower.password_hash);
+  if (!valid) {
+    throw new HttpError(401, "Current password is incorrect");
+  }
+
+  const passwordHash = await hashPassword(newPassword);
+  getDb()
+    .prepare(
+      `UPDATE customers SET
+        password_hash = ?, must_change_password = 0,
+        failed_login_attempts = 0, locked_at = NULL,
+        updated_at = datetime('now')
+       WHERE id = ?`,
+    )
+    .run(passwordHash, customerId);
+
+  return getBorrowerById(customerId)!;
 }
 
 export function updateBorrowerProfile(

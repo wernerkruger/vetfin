@@ -29,6 +29,9 @@ export function runMigrations(database: Database.Database): void {
         slug TEXT NOT NULL UNIQUE,
         email TEXT NOT NULL UNIQUE,
         password_hash TEXT NOT NULL,
+        failed_login_attempts INTEGER NOT NULL DEFAULT 0,
+        locked_at TEXT,
+        must_change_password INTEGER NOT NULL DEFAULT 0,
         contact_name TEXT,
         phone TEXT,
         address_line1 TEXT,
@@ -185,4 +188,20 @@ export function runMigrations(database: Database.Database): void {
   database.exec(
     "CREATE INDEX IF NOT EXISTS idx_bank_transactions_loan_application ON bank_transactions(loan_application_id)",
   );
+
+  for (const table of ["customers", "vet_practices"] as const) {
+    if (!columnExists(database, table, "failed_login_attempts")) {
+      database.exec(
+        `ALTER TABLE ${table} ADD COLUMN failed_login_attempts INTEGER NOT NULL DEFAULT 0`,
+      );
+    }
+    if (!columnExists(database, table, "locked_at")) {
+      database.exec(`ALTER TABLE ${table} ADD COLUMN locked_at TEXT`);
+    }
+    if (!columnExists(database, table, "must_change_password")) {
+      database.exec(
+        `ALTER TABLE ${table} ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0`,
+      );
+    }
+  }
 }

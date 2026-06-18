@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import {
+  changeBorrowerPassword,
   getBorrowerById,
   loginBorrower,
   registerBorrower,
@@ -27,6 +28,11 @@ const signupBody = z.object({
 const loginBody = z.object({
   email: z.string().email(),
   password: z.string().min(1),
+});
+
+const changePasswordBody = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8).max(128),
 });
 
 const profileBody = z.object({
@@ -83,13 +89,19 @@ export function borrowersRouter(): Router {
   router.post("/login", async (req, res, next) => {
     try {
       const { email, password } = loginBody.parse(req.body);
-      const { borrower, token } = await loginBorrower(email, password);
+      const { borrower, token, mustChangePassword } = await loginBorrower(
+        email,
+        password,
+      );
 
       res.json({
         token,
         borrower: toPublicBorrower(borrower),
         applications: listApplicationsForBorrower(borrower.id),
-        redirectTo: "/borrower/dashboard",
+        redirectTo: mustChangePassword
+          ? "/borrower/change-password"
+          : "/borrower/dashboard",
+        mustChangePassword,
       });
     } catch (err) {
       next(err);
@@ -127,6 +139,21 @@ export function borrowersRouter(): Router {
         borrower: toPublicBorrower(borrower),
         applications: listApplicationsForBorrower(customerId),
       });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post("/me/change-password", requireBorrowerAuth, async (req, res, next) => {
+    try {
+      const customerId = getBorrowerAuth(req).sub;
+      const body = changePasswordBody.parse(req.body);
+      const borrower = await changeBorrowerPassword(
+        customerId,
+        body.currentPassword,
+        body.newPassword,
+      );
+      res.json({ borrower: toPublicBorrower(borrower) });
     } catch (err) {
       next(err);
     }

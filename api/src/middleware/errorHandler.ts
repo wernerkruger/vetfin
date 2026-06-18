@@ -1,8 +1,14 @@
 import type { ErrorRequestHandler } from "express";
 import { isAxiosError } from "axios";
 import { ZodError } from "zod";
+import { HttpError } from "../errors.js";
 
 export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+  if (err instanceof HttpError) {
+    res.status(err.status).json({ error: err.message });
+    return;
+  }
+
   const status =
     typeof err === "object" &&
     err !== null &&
@@ -11,9 +17,9 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
       ? (err as { status: number }).status
       : undefined;
 
-  if (status === 404) {
-    res.status(404).json({
-      error: err instanceof Error ? err.message : "Not found",
+  if (status !== undefined && status >= 400 && status < 600) {
+    res.status(status).json({
+      error: err instanceof Error ? err.message : "Request failed",
     });
     return;
   }

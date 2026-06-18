@@ -22,11 +22,11 @@ export default function BorrowerLoginPage() {
 
     const form = new FormData(e.currentTarget);
     try {
-      await login(
+      const redirectTo = await login(
         String(form.get("email") ?? ""),
         String(form.get("password") ?? ""),
       );
-      navigate("/borrower/dashboard", { replace: true });
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {

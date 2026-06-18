@@ -13,6 +13,7 @@ import { applicationsRouter } from "./routes/applications.js";
 import { borrowersRouter } from "./routes/borrowers.js";
 import { practicesRouter } from "./routes/practices.js";
 import { referralRouter } from "./routes/referral.js";
+import { adminRouter } from "./routes/admin.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 const config = getConfig();
@@ -65,6 +66,7 @@ app.use("/api/customers", customersRouter());
 app.use("/api/borrowers", borrowersRouter());
 app.use("/api/applications", applicationsRouter(plaid));
 app.use("/api/practices", practicesRouter());
+app.use("/api/admin", adminRouter());
 app.use("/api/referral", referralRouter());
 app.use("/api/plaid", plaidRouter(plaid));
 

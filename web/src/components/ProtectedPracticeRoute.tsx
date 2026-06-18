@@ -1,8 +1,9 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { usePracticeAuth } from "../context/PracticeAuthContext";
 
 export default function ProtectedPracticeRoute() {
   const { practice, loading } = usePracticeAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -14,6 +15,13 @@ export default function ProtectedPracticeRoute() {
 
   if (!practice) {
     return <Navigate to="/practice/login" replace />;
+  }
+
+  if (
+    practice.mustChangePassword &&
+    location.pathname !== "/practice/change-password"
+  ) {
+    return <Navigate to="/practice/change-password" replace />;
   }
 
   return <Outlet />;

@@ -21,7 +21,7 @@ import {
 type BorrowerAuthContextValue = {
   borrower: BorrowerProfile | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<string>;
   logout: () => void;
   refresh: () => Promise<void>;
 };
@@ -59,6 +59,12 @@ export function BorrowerAuthProvider({ children }: { children: ReactNode }) {
     const result = await borrowerLogin(email, password);
     setBorrowerToken(result.token);
     setBorrower(result.borrower);
+    return (
+      result.redirectTo ??
+      (result.mustChangePassword
+        ? "/borrower/change-password"
+        : "/borrower/dashboard")
+    );
   }, []);
 
   const logout = useCallback(() => {

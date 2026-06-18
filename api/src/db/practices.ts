@@ -5,7 +5,15 @@ import {
   needsVetReview,
   practiceStatusLabel,
 } from "../constants/application.js";
-import { hashPassword } from "../crypto/password.js";
+import {
+  assertAccountCanLogin,
+  clearLoginAttempts,
+  recordFailedLogin,
+} from "../auth/loginSecurity.js";
+import { INVALID_CREDENTIALS_MESSAGE } from "../constants/auth.js";
+import { signPracticeToken } from "../auth/jwt.js";
+import { hashPassword, verifyPassword } from "../crypto/password.js";
+import { HttpError } from "../errors.js";
 import { slugifyName, randomSlugSuffix } from "../utils/slug.js";
 import { getDb } from "./connection.js";
 
@@ -15,6 +23,9 @@ export type VetPracticeRow = {
   slug: string;
   email: string;
   password_hash: string;
+  failed_login_attempts: number;
+  locked_at: string | null;
+  must_change_password: number;
   contact_name: string | null;
   phone: string | null;
   address_line1: string | null;
@@ -99,6 +110,65 @@ export async function createVetPractice(
     .get(id) as VetPracticeRow;
 }
 
+export async function loginPractice(
+  email: string,
+  password: string,
+): Promise<{ practice: VetPracticeRow; token: string; mustChangePassword: boolean }> {
+  const practice = getPracticeByEmail(email);
+  if (!practice) {
+    throw new HttpError(401, INVALID_CREDENTIALS_MESSAGE);
+  }
+
+  assertAccountCanLogin(practice);
+
+  const valid = await verifyPassword(password, practice.password_hash);
+  if (!valid) {
+    recordFailedLogin("vet_practices", practice.id, practice.failed_login_attempts);
+  }
+
+  clearLoginAttempts("vet_practices", practice.id);
+  const refreshed = getPracticeById(practice.id)!;
+  const token = await signPracticeToken({
+    sub: refreshed.id,
+    email: refreshed.email,
+    slug: refreshed.slug,
+  });
+  return {
+    practice: refreshed,
+    token,
+    mustChangePassword: refreshed.must_change_password === 1,
+  };
+}
+
+export async function changePracticePassword(
+  practiceId: string,
+  currentPassword: string,
+  newPassword: string,
+): Promise<VetPracticeRow> {
+  const practice = getPracticeById(practiceId);
+  if (!practice) {
+    throw new HttpError(404, "Practice not found");
+  }
+
+  const valid = await verifyPassword(currentPassword, practice.password_hash);
+  if (!valid) {
+    throw new HttpError(401, "Current password is incorrect");
+  }
+
+  const passwordHash = await hashPassword(newPassword);
+  getDb()
+    .prepare(
+      `UPDATE vet_practices SET
+        password_hash = ?, must_change_password = 0,
+        failed_login_attempts = 0, locked_at = NULL,
+        updated_at = datetime('now')
+       WHERE id = ?`,
+    )
+    .run(passwordHash, practiceId);
+
+  return getPracticeById(practiceId)!;
+}
+
 export function getPracticeById(id: string): VetPracticeRow | undefined {
   return getDb()
     .prepare("SELECT * FROM vet_practices WHERE id = ?")
@@ -129,6 +199,9 @@ export function toPublicPractice(row: VetPracticeRow) {
     city: row.city,
     state: row.state,
     zip: row.zip,
+    mustChangePassword: row.must_change_password === 1,
+    isLocked: row.locked_at !== null,
+    failedLoginAttempts: row.failed_login_attempts,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

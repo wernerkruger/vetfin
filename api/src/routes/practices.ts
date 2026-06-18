@@ -2,15 +2,15 @@ import { Router } from "express";
 import QRCode from "qrcode";
 import { z } from "zod";
 import { signPracticeToken } from "../auth/jwt.js";
-import { verifyPassword } from "../crypto/password.js";
 import { setVetApproval, toPublicApplication } from "../db/applications.js";
 import {
+  changePracticePassword,
   createVetPractice,
-  getPracticeByEmail,
   getPracticeById,
   getPracticeReferrals,
   getPracticeStats,
   getReferralUrl,
+  loginPractice,
   toPublicPractice,
 } from "../db/practices.js";
 import {
@@ -33,6 +33,11 @@ const signupBody = z.object({
 const loginBody = z.object({
   email: z.string().email(),
   password: z.string().min(1),
+});
+
+const changePasswordBody = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8).max(128),
 });
 
 export function practicesRouter(): Router {
@@ -61,29 +66,35 @@ export function practicesRouter(): Router {
   router.post("/login", async (req, res, next) => {
     try {
       const { email, password } = loginBody.parse(req.body);
-      const practice = getPracticeByEmail(email);
-      if (!practice) {
-        res.status(401).json({ error: "Invalid email or password" });
-        return;
-      }
-
-      const valid = await verifyPassword(password, practice.password_hash);
-      if (!valid) {
-        res.status(401).json({ error: "Invalid email or password" });
-        return;
-      }
-
-      const token = await signPracticeToken({
-        sub: practice.id,
-        email: practice.email,
-        slug: practice.slug,
-      });
+      const { practice, token, mustChangePassword } = await loginPractice(
+        email,
+        password,
+      );
 
       res.json({
         practice: toPublicPractice(practice),
         token,
         referralUrl: getReferralUrl(practice.slug),
+        redirectTo: mustChangePassword
+          ? "/practice/change-password"
+          : "/practice/dashboard",
+        mustChangePassword,
       });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post("/me/change-password", requirePracticeAuth, async (req, res, next) => {
+    try {
+      const practiceId = getPracticeAuth(req).sub;
+      const body = changePasswordBody.parse(req.body);
+      const practice = await changePracticePassword(
+        practiceId,
+        body.currentPassword,
+        body.newPassword,
+      );
+      res.json({ practice: toPublicPractice(practice) });
     } catch (err) {
       next(err);
     }

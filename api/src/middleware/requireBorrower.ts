@@ -30,6 +30,16 @@ export const requireBorrowerAuth: RequestHandler = async (req, res, next) => {
       res.status(401).json({ error: "Account not found" });
       return;
     }
+    if (
+      borrower.must_change_password === 1 &&
+      !req.path.endsWith("/change-password")
+    ) {
+      res.status(403).json({
+        error: "You must change your password before continuing.",
+        code: "PASSWORD_CHANGE_REQUIRED",
+      });
+      return;
+    }
     (req as Request & Record<string, unknown>)[AUTH_KEY] = payload;
     next();
   } catch {

@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { usePracticeAuth } from "../context/PracticeAuthContext";
+import { useAdminAuth } from "../context/AdminAuthContext";
 import "./PracticePortal.css";
 
-export default function PracticeLoginPage() {
+export default function AdminLoginPage() {
   const navigate = useNavigate();
-  const { login, practice, loading } = usePracticeAuth();
+  const { login, username, loading } = useAdminAuth();
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!loading && practice) {
-      navigate("/practice/dashboard", { replace: true });
+    if (!loading && username) {
+      navigate("/admin", { replace: true });
     }
-  }, [loading, practice, navigate]);
+  }, [loading, username, navigate]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -22,11 +22,11 @@ export default function PracticeLoginPage() {
 
     const form = new FormData(e.currentTarget);
     try {
-      const redirectTo = await login(
-        String(form.get("email") ?? ""),
+      await login(
+        String(form.get("username") ?? ""),
         String(form.get("password") ?? ""),
       );
-      navigate(redirectTo, { replace: true });
+      navigate("/admin", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
@@ -41,17 +41,23 @@ export default function PracticeLoginPage() {
           <Link to="/" className="portal-back">
             ← VetFin
           </Link>
-          <h1 className="portal-title">Practice portal</h1>
+          <h1 className="portal-title">Admin</h1>
           <p className="portal-lead">
-            Log in to manage your referral link, QR code, and applications.
+            Sign in to manage user accounts and reset passwords.
           </p>
         </header>
 
         <div className="portal-card">
           <form className="portal-form" onSubmit={handleSubmit}>
             <label className="portal-label">
-              Email
-              <input name="email" type="email" required autoComplete="email" />
+              Username
+              <input
+                name="username"
+                type="text"
+                required
+                autoComplete="username"
+                defaultValue="admin"
+              />
             </label>
             <label className="portal-label">
               Password
@@ -73,11 +79,6 @@ export default function PracticeLoginPage() {
               {submitting ? "Signing in…" : "Log in"}
             </button>
           </form>
-
-          <p className="portal-footer-text">
-            New partner?{" "}
-            <Link to="/practice/signup">Create a practice account</Link>
-          </p>
         </div>
       </div>
     </div>

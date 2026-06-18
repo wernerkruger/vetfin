@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   usePlaidLink,
   type PlaidLinkOnSuccessMetadata,
@@ -58,6 +58,7 @@ function stepFromStatus(status: string): Step {
 
 export default function ApplyPage() {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const { refresh: refreshBorrowerAuth } = useBorrowerAuth();
   const [practiceName, setPracticeName] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -164,6 +165,12 @@ export default function ApplyPage() {
         );
         setBorrowerToken(result.token);
         setBorrower(result.borrower);
+        if (result.mustChangePassword) {
+          navigate(result.redirectTo ?? "/borrower/change-password", {
+            replace: true,
+          });
+          return;
+        }
         await refreshBorrowerAuth();
         const data = await fetchCurrentApplication(slug);
         setApplication(data.application);

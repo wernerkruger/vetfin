@@ -1,5 +1,6 @@
 import { getBorrowerToken } from "./borrowerAuth";
 import { getPracticeToken } from "./practiceAuth";
+import { getAdminToken } from "./adminAuth";
 
 function resolveApiBaseUrl(): string {
   const configured = import.meta.env.VITE_API_URL;
@@ -257,6 +258,9 @@ export type VetPractice = {
   city: string | null;
   state: string | null;
   zip: string | null;
+  mustChangePassword?: boolean;
+  isLocked?: boolean;
+  failedLoginAttempts?: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -320,9 +324,21 @@ export async function practiceLogin(email: string, password: string) {
     practice: VetPractice;
     token: string;
     referralUrl: string;
+    redirectTo?: string;
+    mustChangePassword?: boolean;
   }>("/api/practices/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
+  });
+}
+
+export async function changePracticePassword(
+  currentPassword: string,
+  newPassword: string,
+) {
+  return practiceFetch<{ practice: VetPractice }>("/api/practices/me/change-password", {
+    method: "POST",
+    body: JSON.stringify({ currentPassword, newPassword }),
   });
 }
 
@@ -442,6 +458,9 @@ export type BorrowerProfile = {
   city: string | null;
   state: string | null;
   zip: string | null;
+  mustChangePassword?: boolean;
+  isLocked?: boolean;
+  failedLoginAttempts?: number;
 };
 
 function borrowerFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -471,10 +490,25 @@ export async function borrowerLogin(email: string, password: string) {
     token: string;
     borrower: BorrowerProfile;
     applications: LoanApplication[];
+    redirectTo?: string;
+    mustChangePassword?: boolean;
   }>("/api/borrowers/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
   });
+}
+
+export async function changeBorrowerPassword(
+  currentPassword: string,
+  newPassword: string,
+) {
+  return borrowerFetch<{ borrower: BorrowerProfile }>(
+    "/api/borrowers/me/change-password",
+    {
+      method: "POST",
+      body: JSON.stringify({ currentPassword, newPassword }),
+    },
+  );
 }
 
 export async function fetchBorrowerMe() {
@@ -599,4 +633,46 @@ export async function cancelLoanApplication(applicationId: string) {
     `/api/applications/${applicationId}/cancel`,
     { method: "POST" },
   );
+}
+
+// —— Admin ——
+
+export type AdminUser = {
+  id: string;
+  type: "borrower" | "practice";
+  email: string;
+  displayName: string;
+  isLocked: boolean;
+  mustChangePassword: boolean;
+  failedLoginAttempts: number;
+  createdAt: string;
+};
+
+function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  return apiFetch<T>(path, init, getAdminToken());
+}
+
+export async function adminLogin(username: string, password: string) {
+  return apiFetch<{ token: string; username: string }>("/api/admin/login", {
+    method: "POST",
+    body: JSON.stringify({ username, password }),
+  });
+}
+
+export async function fetchAdminMe() {
+  return adminFetch<{ username: string }>("/api/admin/me");
+}
+
+export async function fetchAdminUsers() {
+  return adminFetch<{ users: AdminUser[] }>("/api/admin/users");
+}
+
+export async function adminResetUserPassword(
+  type: "borrower" | "practice",
+  id: string,
+) {
+  return adminFetch<{
+    message: string;
+    temporaryPassword: string;
+  }>(`/api/admin/users/${type}/${id}/reset-password`, { method: "POST" });
 }

@@ -13,6 +13,12 @@ export type BorrowerTokenPayload = {
   type: "borrower";
 };
 
+export type AdminTokenPayload = {
+  sub: "admin";
+  type: "admin";
+  username: string;
+};
+
 function secretKey(): Uint8Array {
   return new TextEncoder().encode(getConfig().jwtSecret);
 }
@@ -40,6 +46,9 @@ export async function verifyPracticeToken(
     throw new Error("Invalid token");
   }
   if (payload.type === "borrower") {
+    throw new Error("Invalid token type");
+  }
+  if (payload.type === "admin") {
     throw new Error("Invalid token type");
   }
 
@@ -76,5 +85,29 @@ export async function verifyBorrowerToken(
     sub,
     email: String(payload.email ?? ""),
     type: "borrower",
+  };
+}
+
+export async function signAdminToken(username: string): Promise<string> {
+  return new SignJWT({
+    type: "admin",
+    username,
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setSubject("admin")
+    .setIssuedAt()
+    .setExpirationTime("8h")
+    .sign(secretKey());
+}
+
+export async function verifyAdminToken(token: string): Promise<AdminTokenPayload> {
+  const { payload } = await jwtVerify(token, secretKey());
+  if (payload.sub !== "admin" || payload.type !== "admin") {
+    throw new Error("Invalid token");
+  }
+  return {
+    sub: "admin",
+    type: "admin",
+    username: String(payload.username ?? "admin"),
   };
 }

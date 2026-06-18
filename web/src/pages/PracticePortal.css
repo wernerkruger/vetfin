@@ -359,3 +359,60 @@
   background: #fff4e6;
   color: #9a6700;
 }
+
+.portal-header--row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.portal-card--highlight {
+  margin-bottom: 1.5rem;
+  border: 1px solid #f5c518;
+  background: #fffbeb;
+}
+
+.portal-subtitle {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  margin: 0 0 0.75rem;
+}
+
+.portal-temp-password {
+  font-family: ui-monospace, monospace;
+  font-size: 1.125rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-white);
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--color-border);
+  word-break: break-all;
+}
+
+.portal-table-wrap {
+  overflow-x: auto;
+}
+
+.portal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.portal-table th,
+.portal-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.portal-table th {
+  font-weight: 600;
+  color: var(--color-ink-muted);
+}
+
+.btn--small {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8125rem;
+}
