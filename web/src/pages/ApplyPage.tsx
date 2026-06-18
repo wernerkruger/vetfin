@@ -32,6 +32,7 @@ import {
   getBorrowerToken,
   setBorrowerToken,
 } from "../lib/borrowerAuth";
+import { ApiError } from "../lib/apiErrors";
 import "./PracticePortal.css";
 import "./ApplyPage.css";
 
@@ -39,6 +40,26 @@ type Step = "account" | "profile" | "loan" | "bank" | "review" | "done";
 
 function isDepository(account: PlaidAccountOption) {
   return account.type === "depository";
+}
+
+function FieldError({ message }: { message?: string | null }) {
+  if (!message) return null;
+  return <span className="portal-field-error">{message}</span>;
+}
+
+function applyFormError(
+  err: unknown,
+  setError: (msg: string | null) => void,
+  setFieldErrors: (errors: Record<string, string>) => void,
+  fallback: string,
+) {
+  if (err instanceof ApiError) {
+    setError(err.message);
+    setFieldErrors(err.fieldErrors);
+    return;
+  }
+  setError(err instanceof Error ? err.message : fallback);
+  setFieldErrors({});
 }
 
 function stepFromStatus(status: string): Step {
@@ -63,6 +84,7 @@ export default function ApplyPage() {
   const [practiceName, setPracticeName] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [step, setStep] = useState<Step>("account");
   const [accountMode, setAccountMode] = useState<"signup" | "login">("signup");
   const [application, setApplication] = useState<LoanApplication | null>(null);
@@ -142,6 +164,7 @@ export default function ApplyPage() {
     e.preventDefault();
     if (!slug) return;
     setError(null);
+    setFieldErrors({});
     setSubmitting(true);
     const form = new FormData(e.currentTarget);
 
@@ -177,7 +200,7 @@ export default function ApplyPage() {
       }
       setStep("profile");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not continue");
+      applyFormError(err, setError, setFieldErrors, "Could not continue");
     } finally {
       setSubmitting(false);
     }
@@ -187,6 +210,7 @@ export default function ApplyPage() {
     e.preventDefault();
     if (!application) return;
     setError(null);
+    setFieldErrors({});
     setSubmitting(true);
     const form = new FormData(e.currentTarget);
 
@@ -208,7 +232,7 @@ export default function ApplyPage() {
       setApplication(app);
       setStep("loan");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save profile");
+      applyFormError(err, setError, setFieldErrors, "Could not save profile");
     } finally {
       setSubmitting(false);
     }
@@ -218,6 +242,7 @@ export default function ApplyPage() {
     e.preventDefault();
     if (!application) return;
     setError(null);
+    setFieldErrors({});
     setSubmitting(true);
     const form = new FormData(e.currentTarget);
 
@@ -253,6 +278,7 @@ export default function ApplyPage() {
   async function runSandboxBank() {
     if (!application) return;
     setError(null);
+    setFieldErrors({});
     setSubmitting(true);
     try {
       const result = await sandboxConnectApplication(application.id);
@@ -270,6 +296,7 @@ export default function ApplyPage() {
   async function saveBankAccounts() {
     if (!application || selectedAccountIds.size === 0) return;
     setError(null);
+    setFieldErrors({});
     setSubmitting(true);
     try {
       const { application: app } = await linkApplicationBankAccounts(
@@ -288,6 +315,7 @@ export default function ApplyPage() {
   async function handleFinalSubmit() {
     if (!application) return;
     setError(null);
+    setFieldErrors({});
     setSubmitting(true);
     try {
       const result = await submitApplication(application.id);
@@ -385,16 +413,19 @@ export default function ApplyPage() {
                   <label className="portal-label">
                     First name
                     <input name="firstName" required autoComplete="given-name" />
+                    <FieldError message={fieldErrors.firstName} />
                   </label>
                   <label className="portal-label">
                     Last name
                     <input name="lastName" required autoComplete="family-name" />
+                    <FieldError message={fieldErrors.lastName} />
                   </label>
                 </div>
               ) : null}
               <label className="portal-label">
                 Email
                 <input name="email" type="email" required autoComplete="email" />
+                <FieldError message={fieldErrors.email} />
               </label>
               <label className="portal-label">
                 Password
@@ -407,6 +438,10 @@ export default function ApplyPage() {
                     accountMode === "signup" ? "new-password" : "current-password"
                   }
                 />
+                {accountMode === "signup" ? (
+                  <span className="portal-field-hint">At least 8 characters</span>
+                ) : null}
+                <FieldError message={fieldErrors.password} />
               </label>
               <button type="submit" className="btn btn--primary" disabled={submitting}>
                 {submitting ? "Please wait…" : "Continue"}
@@ -436,6 +471,7 @@ export default function ApplyPage() {
                     required
                     defaultValue={borrower?.firstName ?? ""}
                   />
+                  <FieldError message={fieldErrors.firstName} />
                 </label>
                 <label className="portal-label">
                   Legal last name
@@ -444,6 +480,7 @@ export default function ApplyPage() {
                     required
                     defaultValue={borrower?.lastName ?? ""}
                   />
+                  <FieldError message={fieldErrors.lastName} />
                 </label>
               </div>
               <label className="portal-label">
@@ -454,7 +491,12 @@ export default function ApplyPage() {
                   required
                   defaultValue={borrower?.phone ?? ""}
                   autoComplete="tel"
+                  placeholder="5551234567"
                 />
+                <span className="portal-field-hint">
+                  10-digit US number — formatting is OK
+                </span>
+                <FieldError message={fieldErrors.phone} />
               </label>
               <label className="portal-label">
                 Date of birth
@@ -464,6 +506,7 @@ export default function ApplyPage() {
                   required
                   defaultValue={borrower?.dateOfBirth ?? ""}
                 />
+                <FieldError message={fieldErrors.dateOfBirth} />
               </label>
               <label className="portal-label">
                 SSN (last 4 digits)
@@ -476,6 +519,7 @@ export default function ApplyPage() {
                   placeholder="1234"
                   autoComplete="off"
                 />
+                <FieldError message={fieldErrors.ssnLast4} />
               </label>
               <label className="portal-label">
                 Street address
@@ -485,6 +529,7 @@ export default function ApplyPage() {
                   defaultValue={borrower?.addressLine1 ?? ""}
                   autoComplete="street-address"
                 />
+                <FieldError message={fieldErrors.addressLine1} />
               </label>
               <label className="portal-label">
                 Apt, suite (optional)
@@ -497,6 +542,7 @@ export default function ApplyPage() {
                 <label className="portal-label">
                   City
                   <input name="city" required defaultValue={borrower?.city ?? ""} />
+                  <FieldError message={fieldErrors.city} />
                 </label>
                 <label className="portal-label">
                   State
@@ -508,6 +554,7 @@ export default function ApplyPage() {
                       </option>
                     ))}
                   </select>
+                  <FieldError message={fieldErrors.state} />
                 </label>
               </div>
               <label className="portal-label">
@@ -515,10 +562,12 @@ export default function ApplyPage() {
                 <input
                   name="zip"
                   required
-                  pattern="\d{5}(-\d{4})?"
+                  inputMode="numeric"
+                  placeholder="12345"
                   defaultValue={borrower?.zip ?? ""}
                   autoComplete="postal-code"
                 />
+                <FieldError message={fieldErrors.zip} />
               </label>
               <button type="submit" className="btn btn--primary" disabled={submitting}>
                 {submitting ? "Saving…" : "Continue to loan details"}

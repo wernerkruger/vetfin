@@ -9,7 +9,6 @@ import {
   getPracticeById,
   getPracticeReferrals,
   getPracticeStats,
-  getReferralUrl,
   loginPractice,
   toPublicPractice,
 } from "../db/practices.js";
@@ -17,6 +16,7 @@ import {
   getPracticeAuth,
   requirePracticeAuth,
 } from "../middleware/requirePractice.js";
+import { buildReferralUrl } from "../utils/publicAppUrl.js";
 
 const signupBody = z.object({
   name: z.string().min(2).max(120),
@@ -56,7 +56,7 @@ export function practicesRouter(): Router {
       res.status(201).json({
         practice: toPublicPractice(practice),
         token,
-        referralUrl: getReferralUrl(practice.slug),
+        referralUrl: buildReferralUrl(practice.slug, req),
       });
     } catch (err) {
       next(err);
@@ -74,7 +74,7 @@ export function practicesRouter(): Router {
       res.json({
         practice: toPublicPractice(practice),
         token,
-        referralUrl: getReferralUrl(practice.slug),
+        referralUrl: buildReferralUrl(practice.slug, req),
         redirectTo: mustChangePassword
           ? "/practice/change-password"
           : "/practice/dashboard",
@@ -111,7 +111,7 @@ export function practicesRouter(): Router {
 
       res.json({
         practice: toPublicPractice(practice),
-        referralUrl: getReferralUrl(practice.slug),
+        referralUrl: buildReferralUrl(practice.slug, req),
         stats: getPracticeStats(practice.id),
       });
     } catch (err) {
@@ -140,7 +140,7 @@ export function practicesRouter(): Router {
         return;
       }
 
-      const url = getReferralUrl(practice.slug);
+      const url = buildReferralUrl(practice.slug, req);
       const png = await QRCode.toBuffer(url, {
         type: "png",
         width: 320,
@@ -205,7 +205,7 @@ export function practicesRouter(): Router {
         return;
       }
 
-      const url = getReferralUrl(practice.slug);
+      const url = buildReferralUrl(practice.slug, req);
       const dataUrl = await QRCode.toDataURL(url, {
         width: 320,
         margin: 2,

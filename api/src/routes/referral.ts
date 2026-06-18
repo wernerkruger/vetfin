@@ -3,9 +3,9 @@ import { z } from "zod";
 import {
   createApplicantFromReferral,
   getPracticeBySlug,
-  getReferralUrl,
   toPublicPractice,
 } from "../db/practices.js";
+import { buildReferralUrl } from "../utils/publicAppUrl.js";
 
 const applyBody = z.object({
   applicantName: z.string().min(2).max(120),
@@ -32,7 +32,7 @@ export function referralRouter(): Router {
           city: practice.city,
           state: practice.state,
         },
-        referralUrl: getReferralUrl(practice.slug),
+        referralUrl: buildReferralUrl(practice.slug, req),
       });
     } catch (err) {
       next(err);

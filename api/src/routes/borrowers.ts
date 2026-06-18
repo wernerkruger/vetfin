@@ -16,36 +16,51 @@ import {
 } from "../db/applications.js";
 import { getPracticeBySlug } from "../db/practices.js";
 import { getBorrowerAuth, requireBorrowerAuth } from "../middleware/requireBorrower.js";
+import {
+  dateOfBirthField,
+  emailField,
+  nameField,
+  passwordField,
+  phoneField,
+  ssnLast4Field,
+  stateField,
+  zipField,
+} from "../validation/fields.js";
 
 const signupBody = z.object({
-  referralSlug: z.string().min(1),
-  email: z.string().email(),
-  password: z.string().min(8).max(128),
-  firstName: z.string().min(1).max(80),
-  lastName: z.string().min(1).max(80),
+  referralSlug: z.string().trim().min(1),
+  email: emailField,
+  password: passwordField,
+  firstName: nameField("First name"),
+  lastName: nameField("Last name"),
 });
 
 const loginBody = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
+  email: emailField,
+  password: z.string().min(1, "Password is required"),
 });
 
 const changePasswordBody = z.object({
-  currentPassword: z.string().min(1),
-  newPassword: z.string().min(8).max(128),
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: passwordField,
 });
 
 const profileBody = z.object({
-  firstName: z.string().min(1).max(80),
-  lastName: z.string().min(1).max(80),
-  phone: z.string().min(10).max(20),
-  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  ssnLast4: z.string().regex(/^\d{4}$/),
-  addressLine1: z.string().min(1).max(200),
-  addressLine2: z.string().max(200).optional(),
-  city: z.string().min(1).max(80),
-  state: z.string().length(2),
-  zip: z.string().regex(/^\d{5}(-\d{4})?$/),
+  firstName: nameField("First name"),
+  lastName: nameField("Last name"),
+  phone: phoneField,
+  dateOfBirth: dateOfBirthField,
+  ssnLast4: ssnLast4Field,
+  addressLine1: z.string().trim().min(1, "Street address is required").max(200),
+  addressLine2: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
+    .transform((v) => v || undefined),
+  city: z.string().trim().min(1, "City is required").max(80),
+  state: stateField,
+  zip: zipField,
 });
 
 export function borrowersRouter(): Router {

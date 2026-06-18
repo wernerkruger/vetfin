@@ -416,3 +416,22 @@
   padding: 0.4rem 0.75rem;
   font-size: 0.8125rem;
 }
+
+.portal-table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.portal-field-error {
+  color: #b42318;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.portal-field-hint {
+  color: var(--color-ink-muted);
+  font-size: 0.8125rem;
+  font-weight: 400;
+}

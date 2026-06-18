@@ -43,6 +43,14 @@ if [[ -z "${PLAID_CLIENT_ID:-}" ]] || [[ -z "${PLAID_SECRET:-}" ]]; then
   exit 1
 fi
 
+if [[ "${PUBLIC_APP_URL:-}" == *localhost* ]] || [[ "${PUBLIC_APP_URL:-}" == *127.0.0.1* ]]; then
+  red "PUBLIC_APP_URL in api/.env is still localhost."
+  echo "Set PUBLIC_APP_URL to how users reach the site, e.g.:"
+  echo "  PUBLIC_APP_URL=http://$(curl -sf http://checkip.amazonaws.com 2>/dev/null || echo 'YOUR_ELASTIC_IP')"
+  echo "  CORS_ORIGINS=http://$(curl -sf http://checkip.amazonaws.com 2>/dev/null || echo 'YOUR_ELASTIC_IP')"
+  exit 1
+fi
+
 MODE="${1:-}"
 if [[ -z "$MODE" ]]; then
   if [[ -n "${DOMAIN:-}" ]] && [[ "$PUBLIC_APP_URL" == https://* ]]; then

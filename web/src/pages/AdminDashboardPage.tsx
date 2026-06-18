@@ -3,17 +3,109 @@ import { Link } from "react-router-dom";
 import { useAdminAuth } from "../context/AdminAuthContext";
 import {
   adminResetUserPassword,
+  adminUnlockUser,
   fetchAdminUsers,
   type AdminUser,
 } from "../lib/api";
 import "./PracticePortal.css";
 
+type AdminTab = "practices" | "borrowers";
+
+function statusLabel(user: AdminUser): string {
+  if (user.isLocked) return "Locked";
+  if (user.mustChangePassword) return "Must change password";
+  if (!user.hasLogin) return "No login yet";
+  return "Active";
+}
+
+function UserTable({
+  users,
+  emptyMessage,
+  resettingId,
+  unlockingId,
+  onReset,
+  onUnlock,
+}: {
+  users: AdminUser[];
+  emptyMessage: string;
+  resettingId: string | null;
+  unlockingId: string | null;
+  onReset: (user: AdminUser) => void;
+  onUnlock: (user: AdminUser) => void;
+}) {
+  if (users.length === 0) {
+    return <p>{emptyMessage}</p>;
+  }
+
+  return (
+    <div className="portal-table-wrap">
+      <table className="portal-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Status</th>
+            <th>Failed logins</th>
+            <th>Created</th>
+            <th />
+          </tr>
+        </thead>
+        <tbody>
+          {users.map((user) => (
+            <tr key={user.id}>
+              <td>{user.displayName}</td>
+              <td>{user.email}</td>
+              <td>{statusLabel(user)}</td>
+              <td>{user.failedLoginAttempts}</td>
+              <td>{new Date(user.createdAt).toLocaleDateString()}</td>
+              <td className="portal-table-actions">
+                {user.isLocked ? (
+                  <button
+                    type="button"
+                    className="btn btn--secondary btn--small"
+                    disabled={unlockingId === user.id}
+                    onClick={() => onUnlock(user)}
+                  >
+                    {unlockingId === user.id ? "Unlocking…" : "Unlock"}
+                  </button>
+                ) : null}
+                {user.hasLogin ? (
+                  <button
+                    type="button"
+                    className="btn btn--secondary btn--small"
+                    disabled={resettingId === user.id}
+                    onClick={() => onReset(user)}
+                  >
+                    {resettingId === user.id ? "Resetting…" : "Reset password"}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="btn btn--secondary btn--small"
+                    disabled={resettingId === user.id}
+                    onClick={() => onReset(user)}
+                  >
+                    {resettingId === user.id ? "Setting up…" : "Set password"}
+                  </button>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function AdminDashboardPage() {
   const { username, logout } = useAdminAuth();
-  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [tab, setTab] = useState<AdminTab>("practices");
+  const [practices, setPractices] = useState<AdminUser[]>([]);
+  const [borrowers, setBorrowers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [resettingId, setResettingId] = useState<string | null>(null);
+  const [unlockingId, setUnlockingId] = useState<string | null>(null);
   const [temporaryPassword, setTemporaryPassword] = useState<{
     email: string;
     password: string;
@@ -23,7 +115,8 @@ export default function AdminDashboardPage() {
     setError(null);
     try {
       const data = await fetchAdminUsers();
-      setUsers(data.users);
+      setPractices(data.practices);
+      setBorrowers(data.borrowers);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load users");
     } finally {
@@ -36,9 +129,10 @@ export default function AdminDashboardPage() {
   }, [loadUsers]);
 
   async function handleReset(user: AdminUser) {
+    const action = user.hasLogin ? "Reset password for" : "Create a login for";
     if (
       !window.confirm(
-        `Reset password for ${user.email}? They will receive a temporary password and must change it on next login.`,
+        `${action} ${user.email}? They will receive a temporary password and must change it on next login.`,
       )
     ) {
       return;
@@ -60,6 +154,21 @@ export default function AdminDashboardPage() {
     }
   }
 
+  async function handleUnlock(user: AdminUser) {
+    setUnlockingId(user.id);
+    setError(null);
+    try {
+      await adminUnlockUser(user.type, user.id);
+      await loadUsers();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not unlock account");
+    } finally {
+      setUnlockingId(null);
+    }
+  }
+
+  const activeUsers = tab === "practices" ? practices : borrowers;
+
   return (
     <div className="portal">
       <div className="portal-inner portal-inner--wide">
@@ -68,10 +177,10 @@ export default function AdminDashboardPage() {
             <Link to="/" className="portal-back">
               ← VetFin
             </Link>
-            <h1 className="portal-title">User management</h1>
+            <h1 className="portal-title">Admin</h1>
             <p className="portal-lead">
-              Signed in as <strong>{username}</strong>. Reset passwords for locked
-              accounts or issue temporary passwords.
+              Signed in as <strong>{username}</strong>. Manage vet practices and
+              borrower accounts.
             </p>
           </div>
           <button type="button" className="btn btn--secondary" onClick={logout}>
@@ -98,56 +207,40 @@ export default function AdminDashboardPage() {
         ) : null}
 
         <div className="portal-card">
+          <div className="apply-tabs" style={{ marginBottom: "1.25rem" }}>
+            <button
+              type="button"
+              className={tab === "practices" ? "apply-tab--active" : ""}
+              onClick={() => setTab("practices")}
+            >
+              Vet practices ({practices.length})
+            </button>
+            <button
+              type="button"
+              className={tab === "borrowers" ? "apply-tab--active" : ""}
+              onClick={() => setTab("borrowers")}
+            >
+              Borrowers ({borrowers.length})
+            </button>
+          </div>
+
           {error ? <p className="portal-error">{error}</p> : null}
 
           {loading ? (
-            <p>Loading users…</p>
-          ) : users.length === 0 ? (
-            <p>No user accounts yet.</p>
+            <p>Loading…</p>
           ) : (
-            <div className="portal-table-wrap">
-              <table className="portal-table">
-                <thead>
-                  <tr>
-                    <th>Type</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Status</th>
-                    <th>Failed logins</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((user) => (
-                    <tr key={`${user.type}-${user.id}`}>
-                      <td>{user.type === "practice" ? "Practice" : "Borrower"}</td>
-                      <td>{user.displayName}</td>
-                      <td>{user.email}</td>
-                      <td>
-                        {user.isLocked
-                          ? "Locked"
-                          : user.mustChangePassword
-                            ? "Must change password"
-                            : "Active"}
-                      </td>
-                      <td>{user.failedLoginAttempts}</td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn btn--secondary btn--small"
-                          disabled={resettingId === user.id}
-                          onClick={() => void handleReset(user)}
-                        >
-                          {resettingId === user.id
-                            ? "Resetting…"
-                            : "Reset password"}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <UserTable
+              users={activeUsers}
+              emptyMessage={
+                tab === "practices"
+                  ? "No vet practices yet."
+                  : "No borrowers or applicants yet."
+              }
+              resettingId={resettingId}
+              unlockingId={unlockingId}
+              onReset={(user) => void handleReset(user)}
+              onUnlock={(user) => void handleUnlock(user)}
+            />
           )}
         </div>
       </div>

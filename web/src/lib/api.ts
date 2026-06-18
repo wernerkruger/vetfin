@@ -1,4 +1,6 @@
 import { getBorrowerToken } from "./borrowerAuth";
+import { parseApiErrorPayload } from "./apiErrors";
+export { ApiError } from "./apiErrors";
 import { getPracticeToken } from "./practiceAuth";
 import { getAdminToken } from "./adminAuth";
 
@@ -37,11 +39,7 @@ async function apiFetch<T>(
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    const message =
-      typeof data.error === "string"
-        ? data.error
-        : `Request failed (${response.status})`;
-    throw new Error(message);
+    throw parseApiErrorPayload(data, response.status);
   }
 
   return data as T;
@@ -642,6 +640,7 @@ export type AdminUser = {
   type: "borrower" | "practice";
   email: string;
   displayName: string;
+  hasLogin: boolean;
   isLocked: boolean;
   mustChangePassword: boolean;
   failedLoginAttempts: number;
@@ -664,7 +663,19 @@ export async function fetchAdminMe() {
 }
 
 export async function fetchAdminUsers() {
-  return adminFetch<{ users: AdminUser[] }>("/api/admin/users");
+  return adminFetch<{ practices: AdminUser[]; borrowers: AdminUser[] }>(
+    "/api/admin/users",
+  );
+}
+
+export async function adminUnlockUser(
+  type: "borrower" | "practice",
+  id: string,
+) {
+  return adminFetch<{ message: string }>(
+    `/api/admin/users/${type}/${id}/unlock`,
+    { method: "POST" },
+  );
 }
 
 export async function adminResetUserPassword(

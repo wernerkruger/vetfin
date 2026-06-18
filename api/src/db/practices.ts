@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { getConfig } from "../config.js";
+import { buildReferralUrl } from "../utils/publicAppUrl.js";
 import {
   IN_PROGRESS_STATUSES,
   needsVetReview,
@@ -208,8 +208,7 @@ export function toPublicPractice(row: VetPracticeRow) {
 }
 
 export function getReferralUrl(slug: string): string {
-  const base = getConfig().publicAppUrl.replace(/\/$/, "");
-  return `${base}/apply/${slug}`;
+  return buildReferralUrl(slug);
 }
 
 function displayApplicantName(row: {

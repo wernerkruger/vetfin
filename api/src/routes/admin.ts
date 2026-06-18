@@ -3,7 +3,7 @@ import { z } from "zod";
 import { signAdminToken } from "../auth/jwt.js";
 import { getConfig } from "../config.js";
 import { verifyPassword } from "../crypto/password.js";
-import { adminResetUserPassword, listAdminUsers } from "../db/admin.js";
+import { adminResetUserPassword, adminUnlockUser, listAdminUsers } from "../db/admin.js";
 import { HttpError } from "../errors.js";
 import { getAdminAuth, requireAdminAuth } from "../middleware/requireAdmin.js";
 
@@ -50,8 +50,23 @@ export function adminRouter(): Router {
   });
 
   router.get("/users", requireAdminAuth, (_req, res) => {
-    res.json({ users: listAdminUsers() });
+    const { practices, borrowers } = listAdminUsers();
+    res.json({ practices, borrowers });
   });
+
+  router.post(
+    "/users/:type/:id/unlock",
+    requireAdminAuth,
+    (req, res, next) => {
+      try {
+        const params = resetParams.parse(req.params);
+        adminUnlockUser(params.type, params.id);
+        res.json({ message: "Account unlocked." });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
 
   router.post(
     "/users/:type/:id/reset-password",

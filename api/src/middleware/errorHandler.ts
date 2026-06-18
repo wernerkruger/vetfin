@@ -2,6 +2,7 @@ import type { ErrorRequestHandler } from "express";
 import { isAxiosError } from "axios";
 import { ZodError } from "zod";
 import { HttpError } from "../errors.js";
+import { formatZodError } from "../utils/validationErrors.js";
 
 export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   if (err instanceof HttpError) {
@@ -25,8 +26,10 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   }
 
   if (err instanceof ZodError) {
+    const formatted = formatZodError(err);
     res.status(400).json({
-      error: "Validation failed",
+      error: formatted.error,
+      fieldErrors: formatted.fieldErrors,
       details: err.flatten(),
     });
     return;

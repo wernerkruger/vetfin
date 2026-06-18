@@ -8,21 +8,25 @@ export type AdminUserSummary = {
   type: "borrower" | "practice";
   email: string;
   displayName: string;
+  hasLogin: boolean;
   isLocked: boolean;
   mustChangePassword: boolean;
   failedLoginAttempts: number;
   createdAt: string;
 };
 
-export function listAdminUsers(): AdminUserSummary[] {
+export function listAdminUsers(): {
+  practices: AdminUserSummary[];
+  borrowers: AdminUserSummary[];
+} {
   const database = getDb();
 
   const borrowers = database
     .prepare(
-      `SELECT id, email, applicant_name, first_name, last_name,
+      `SELECT id, email, applicant_name, first_name, last_name, password_hash,
               locked_at, must_change_password, failed_login_attempts, created_at
        FROM customers
-       WHERE password_hash IS NOT NULL AND email IS NOT NULL
+       WHERE email IS NOT NULL
        ORDER BY email COLLATE NOCASE`,
     )
     .all() as Array<{
@@ -31,6 +35,7 @@ export function listAdminUsers(): AdminUserSummary[] {
     applicant_name: string | null;
     first_name: string | null;
     last_name: string | null;
+    password_hash: string | null;
     locked_at: string | null;
     must_change_password: number;
     failed_login_attempts: number;
@@ -62,6 +67,7 @@ export function listAdminUsers(): AdminUserSummary[] {
       row.applicant_name?.trim() ||
       [row.first_name, row.last_name].filter(Boolean).join(" ") ||
       row.email,
+    hasLogin: row.password_hash !== null,
     isLocked: row.locked_at !== null,
     mustChangePassword: row.must_change_password === 1,
     failedLoginAttempts: row.failed_login_attempts,
@@ -73,15 +79,14 @@ export function listAdminUsers(): AdminUserSummary[] {
     type: "practice" as const,
     email: row.email,
     displayName: row.name,
+    hasLogin: true,
     isLocked: row.locked_at !== null,
     mustChangePassword: row.must_change_password === 1,
     failedLoginAttempts: row.failed_login_attempts,
     createdAt: row.created_at,
   }));
 
-  return [...practiceUsers, ...borrowerUsers].sort((a, b) =>
-    a.email.localeCompare(b.email),
-  );
+  return { practices: practiceUsers, borrowers: borrowerUsers };
 }
 
 export async function adminResetUserPassword(
@@ -112,4 +117,24 @@ export async function adminResetUserPassword(
     .run(passwordHash, id);
 
   return { temporaryPassword };
+}
+
+export function adminUnlockUser(
+  type: "borrower" | "practice",
+  id: string,
+): void {
+  const table = type === "borrower" ? "customers" : "vet_practices";
+  const database = getDb();
+  const result = database
+    .prepare(
+      `UPDATE ${table} SET
+        failed_login_attempts = 0, locked_at = NULL,
+        updated_at = datetime('now')
+       WHERE id = ?`,
+    )
+    .run(id);
+
+  if (result.changes === 0) {
+    throw new HttpError(404, "User not found");
+  }
 }
