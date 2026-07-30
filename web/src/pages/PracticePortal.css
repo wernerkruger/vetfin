@@ -24,6 +24,15 @@
   max-width: 95%;
 }
 
+.portal-inner--shell {
+  margin: 0;
+  max-width: none;
+}
+
+.portal-inner--wide.portal-inner--shell {
+  max-width: 1180px;
+}
+
 .portal-header {
   margin-bottom: 2rem;
 }

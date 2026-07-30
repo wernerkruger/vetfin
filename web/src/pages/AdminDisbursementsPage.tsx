@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import AdminNav from "../components/AdminNav";
+import { adminNavItems } from "../components/AdminNav";
+import DashboardShell from "../components/DashboardShell";
 import { useAdminAuth } from "../context/AdminAuthContext";
 import {
   adminMarkDisbursementSent,
@@ -62,27 +63,16 @@ export default function AdminDisbursementsPage() {
   const disbursed = disbursements.filter((d) => d.disbursementStatus === "disbursed");
 
   return (
-    <div className="portal">
-      <div className="portal-inner portal-inner--wide">
-        <header className="portal-header portal-header--row">
-          <div>
-            <Link to="/" className="portal-back">
-              ← VetFin
-            </Link>
-            <h1 className="portal-title">Disbursements</h1>
-            <p className="portal-lead">
-              Signed in as <strong>{username}</strong>. Fully approved loans
-              awaiting or completed payout.
-            </p>
-          </div>
-          <button type="button" className="btn btn--secondary" onClick={logout}>
-            Log out
-          </button>
-        </header>
-
-        <AdminNav active="disbursements" />
-
-        <div className="portal-grid portal-grid--stats" style={{ margin: "1.5rem 0" }}>
+    <DashboardShell
+      homeTo="/admin"
+      navItems={adminNavItems("disbursements")}
+      userLabel={username}
+      onLogout={logout}
+      title="Disbursements"
+      lead="Fully approved loans awaiting or completed payout."
+    >
+      <div className="portal-inner portal-inner--wide portal-inner--shell">
+        <div className="portal-grid portal-grid--stats" style={{ margin: "0 0 1.5rem" }}>
           <div className="portal-stat">
             <p className="portal-stat-value">{pending.length}</p>
             <p className="portal-stat-label">Pending payout</p>
@@ -179,6 +169,6 @@ export default function AdminDisbursementsPage() {
           )}
         </div>
       </div>
-    </div>
+    </DashboardShell>
   );
 }

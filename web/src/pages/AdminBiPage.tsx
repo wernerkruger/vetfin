@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import AdminNav from "../components/AdminNav";
+import { adminNavItems } from "../components/AdminNav";
+import DashboardShell from "../components/DashboardShell";
 import { useAdminAuth } from "../context/AdminAuthContext";
 import { fetchAdminBi, type AdminBiAnalytics } from "../lib/api";
 import "./PracticePortal.css";
@@ -133,26 +133,15 @@ export default function AdminBiPage() {
   }, []);
 
   return (
-    <div className="portal">
-      <div className="portal-inner portal-inner--wide">
-        <header className="portal-header portal-header--row">
-          <div>
-            <Link to="/" className="portal-back">
-              ← VetFin
-            </Link>
-            <h1 className="portal-title">Business intelligence</h1>
-            <p className="portal-lead">
-              Signed in as <strong>{username}</strong>. Portfolio growth and
-              repayment health across practices and borrowers.
-            </p>
-          </div>
-          <button type="button" className="btn btn--secondary" onClick={logout}>
-            Log out
-          </button>
-        </header>
-
-        <AdminNav active="bi" />
-
+    <DashboardShell
+      homeTo="/admin"
+      navItems={adminNavItems("bi")}
+      userLabel={username}
+      onLogout={logout}
+      title="Business intelligence"
+      lead="Portfolio growth and repayment health across practices and borrowers."
+    >
+      <div className="portal-inner portal-inner--wide portal-inner--shell">
         {loading ? (
           <p className="portal-status">Loading analytics…</p>
         ) : error ? (
@@ -289,6 +278,6 @@ export default function AdminBiPage() {
           </>
         ) : null}
       </div>
-    </div>
+    </DashboardShell>
   );
 }

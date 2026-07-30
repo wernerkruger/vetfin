@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import AdminNav from "../components/AdminNav";
+import { adminNavItems } from "../components/AdminNav";
+import DashboardShell from "../components/DashboardShell";
 import { useAdminAuth } from "../context/AdminAuthContext";
 import {
   adminResetUserPassword,
@@ -179,26 +180,15 @@ export default function AdminDashboardPage() {
   const activeUsers = tab === "practices" ? practices : borrowers;
 
   return (
-    <div className="portal">
-      <div className="portal-inner portal-inner--wide">
-        <header className="portal-header portal-header--row">
-          <div>
-            <Link to="/" className="portal-back">
-              ← VetFin
-            </Link>
-            <h1 className="portal-title">Admin</h1>
-            <p className="portal-lead">
-              Signed in as <strong>{username}</strong>. Manage vet practices and
-              borrower accounts.
-            </p>
-          </div>
-          <button type="button" className="btn btn--secondary" onClick={logout}>
-            Log out
-          </button>
-        </header>
-
-        <AdminNav active="users" />
-
+    <DashboardShell
+      homeTo="/admin"
+      navItems={adminNavItems("users")}
+      userLabel={username}
+      onLogout={logout}
+      title="Admin"
+      lead="Manage vet practices and borrower accounts."
+    >
+      <div className="portal-inner portal-inner--wide portal-inner--shell">
         {temporaryPassword ? (
           <div className="portal-card portal-card--highlight">
             <h2 className="portal-subtitle">Temporary password</h2>
@@ -256,6 +246,6 @@ export default function AdminDashboardPage() {
           )}
         </div>
       </div>
-    </div>
+    </DashboardShell>
   );
 }

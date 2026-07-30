@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import DashboardShell, { type ShellNavItem } from "../components/DashboardShell";
+import { HomeIcon } from "../components/icons";
 import { usePracticeAuth } from "../context/PracticeAuthContext";
 import {
   fetchPracticeQrData,
@@ -10,6 +11,10 @@ import {
   type PracticeStats,
 } from "../lib/api";
 import "./PracticePortal.css";
+
+const NAV_ITEMS: ShellNavItem[] = [
+  { to: "/practice/dashboard", label: "Dashboard", icon: <HomeIcon /> },
+];
 
 function VetReviewActions({
   referral,
@@ -153,31 +158,15 @@ export default function PracticeDashboardPage() {
   if (!practice) return null;
 
   return (
-    <div className="portal">
-      <div className="portal-inner portal-inner--wide">
-        <div className="portal-topbar">
-          <Link to="/" className="portal-topbar-brand">
-            VetFin
-          </Link>
-          <div>
-            <span style={{ marginRight: "1rem", color: "var(--color-ink-muted)" }}>
-              {practice.name}
-            </span>
-            <button type="button" className="btn btn--secondary" onClick={logout}>
-              Log out
-            </button>
-          </div>
-        </div>
-
-        <header className="portal-header">
-          <h1 className="portal-title">Practice dashboard</h1>
-          <p className="portal-lead">
-            Share your referral link or QR code so pet owners apply for financing
-            through your clinic. Confirm each submitted application is legitimate
-            before it can be approved for funding.
-          </p>
-        </header>
-
+    <DashboardShell
+      homeTo="/practice/dashboard"
+      navItems={NAV_ITEMS}
+      userLabel={practice.name}
+      onLogout={logout}
+      title="Practice dashboard"
+      lead="Share your referral link or QR code so pet owners apply for financing through your clinic. Confirm each submitted application is legitimate before it can be approved for funding."
+    >
+      <div className="portal-inner portal-inner--wide portal-inner--shell">
         <div className="portal-grid">
           <section className="portal-card portal-referral-box">
             <h2 style={{ marginTop: 0, fontFamily: "var(--font-display)" }}>
@@ -316,6 +305,6 @@ export default function PracticeDashboardPage() {
           )}
         </section>
       </div>
-    </div>
+    </DashboardShell>
   );
 }

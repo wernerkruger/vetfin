@@ -16,17 +16,9 @@
   margin-bottom: 1.5rem;
 }
 
-.footer-brand .logo-mark {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
+.footer-logo-img {
   height: 2rem;
-  background: var(--color-teal);
-  color: var(--color-white);
-  font-size: 0.6875rem;
-  font-weight: 700;
-  border-radius: 6px;
+  width: auto;
 }
 
 .footer-tagline {

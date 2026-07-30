@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import logoLockup from "../assets/logo-lockup.png";
 import "./Header.css";
 
 const navLinks = [
@@ -16,10 +17,7 @@ export default function Header() {
     <header className="header">
       <div className="header-inner">
         <Link to="/" className="logo" aria-label="VetFin home">
-          <span className="logo-mark" aria-hidden="true">
-            VF
-          </span>
-          <span className="logo-text">VetFin</span>
+          <img src={logoLockup} alt="VetFin" className="logo-img" />
         </Link>
 
         <button

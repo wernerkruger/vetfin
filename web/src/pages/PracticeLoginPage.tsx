@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import AuthLayout from "../components/AuthLayout";
 import { usePracticeAuth } from "../context/PracticeAuthContext";
 import "./PracticePortal.css";
 
@@ -35,51 +36,35 @@ export default function PracticeLoginPage() {
   }
 
   return (
-    <div className="portal">
-      <div className="portal-inner">
-        <header className="portal-header">
-          <Link to="/" className="portal-back">
-            ← VetFin
-          </Link>
-          <h1 className="portal-title">Practice portal</h1>
-          <p className="portal-lead">
-            Log in to manage your referral link, QR code, and applications.
-          </p>
-        </header>
+    <AuthLayout
+      title="Practice portal"
+      lead="Log in to manage your referral link, QR code, and applications."
+    >
+      <form className="portal-form" onSubmit={handleSubmit}>
+        <label className="portal-label">
+          Email
+          <input name="email" type="email" required autoComplete="email" />
+        </label>
+        <label className="portal-label">
+          Password
+          <input
+            name="password"
+            type="password"
+            required
+            autoComplete="current-password"
+          />
+        </label>
 
-        <div className="portal-card">
-          <form className="portal-form" onSubmit={handleSubmit}>
-            <label className="portal-label">
-              Email
-              <input name="email" type="email" required autoComplete="email" />
-            </label>
-            <label className="portal-label">
-              Password
-              <input
-                name="password"
-                type="password"
-                required
-                autoComplete="current-password"
-              />
-            </label>
+        {error ? <p className="portal-error">{error}</p> : null}
 
-            {error ? <p className="portal-error">{error}</p> : null}
+        <button type="submit" className="btn btn--primary" disabled={submitting}>
+          {submitting ? "Signing in…" : "Log in"}
+        </button>
+      </form>
 
-            <button
-              type="submit"
-              className="btn btn--primary"
-              disabled={submitting}
-            >
-              {submitting ? "Signing in…" : "Log in"}
-            </button>
-          </form>
-
-          <p className="portal-footer-text">
-            New partner?{" "}
-            <Link to="/practice/signup">Create a practice account</Link>
-          </p>
-        </div>
-      </div>
-    </div>
+      <p className="portal-footer-text">
+        New partner? <Link to="/practice/signup">Create a practice account</Link>
+      </p>
+    </AuthLayout>
   );
 }

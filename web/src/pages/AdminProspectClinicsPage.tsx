@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import AdminNav from "../components/AdminNav";
+import { adminNavItems } from "../components/AdminNav";
+import DashboardShell from "../components/DashboardShell";
 import { useAdminAuth } from "../context/AdminAuthContext";
 import {
   fetchAdminProspectClinics,
@@ -162,27 +162,15 @@ export default function AdminProspectClinicsPage() {
   }
 
   return (
-    <div className="portal">
-      <div className="portal-inner portal-inner--prospects">
-        <header className="portal-header portal-header--row">
-          <div>
-            <Link to="/" className="portal-back">
-              ← VetFin
-            </Link>
-            <h1 className="portal-title">Prospect clinics</h1>
-            <p className="portal-lead">
-              Signed in as <strong>{username}</strong>. Browse and filter the
-              WowVets clinic directory. Clinics are marked signed up when they
-              register on VetFin.
-            </p>
-          </div>
-          <button type="button" className="btn btn--secondary" onClick={logout}>
-            Log out
-          </button>
-        </header>
-
-        <AdminNav active="clinics" />
-
+    <DashboardShell
+      homeTo="/admin"
+      navItems={adminNavItems("clinics")}
+      userLabel={username}
+      onLogout={logout}
+      title="Prospect clinics"
+      lead="Browse and filter the WowVets clinic directory. Clinics are marked signed up when they register on VetFin."
+    >
+      <div className="portal-inner portal-inner--prospects portal-inner--shell">
         <div className="portal-card prospect-card">
           <div className="prospect-toolbar">
             <div className="prospect-toolbar__actions">
@@ -335,6 +323,6 @@ export default function AdminProspectClinicsPage() {
           </div>
         </div>
       </div>
-    </div>
+    </DashboardShell>
   );
 }

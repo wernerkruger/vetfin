@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import AuthLayout from "../components/AuthLayout";
 import { usePracticeAuth } from "../context/PracticeAuthContext";
 import { changePracticePassword } from "../lib/api";
 import "./PracticePortal.css";
@@ -40,63 +41,51 @@ export default function PracticeChangePasswordPage() {
   }
 
   return (
-    <div className="portal">
-      <div className="portal-inner">
-        <header className="portal-header">
-          <h1 className="portal-title">Change your password</h1>
-          <p className="portal-lead">
-            You must set a new password before continuing.
-          </p>
-        </header>
+    <AuthLayout
+      title="Change your password"
+      lead="You must set a new password before continuing."
+    >
+      <form className="portal-form" onSubmit={handleSubmit}>
+        <label className="portal-label">
+          Current password
+          <input
+            name="currentPassword"
+            type="password"
+            required
+            autoComplete="current-password"
+          />
+        </label>
+        <label className="portal-label">
+          New password
+          <input
+            name="newPassword"
+            type="password"
+            required
+            minLength={8}
+            autoComplete="new-password"
+          />
+        </label>
+        <label className="portal-label">
+          Confirm new password
+          <input
+            name="confirmPassword"
+            type="password"
+            required
+            minLength={8}
+            autoComplete="new-password"
+          />
+        </label>
 
-        <div className="portal-card">
-          <form className="portal-form" onSubmit={handleSubmit}>
-            <label className="portal-label">
-              Current password
-              <input
-                name="currentPassword"
-                type="password"
-                required
-                autoComplete="current-password"
-              />
-            </label>
-            <label className="portal-label">
-              New password
-              <input
-                name="newPassword"
-                type="password"
-                required
-                minLength={8}
-                autoComplete="new-password"
-              />
-            </label>
-            <label className="portal-label">
-              Confirm new password
-              <input
-                name="confirmPassword"
-                type="password"
-                required
-                minLength={8}
-                autoComplete="new-password"
-              />
-            </label>
+        {error ? <p className="portal-error">{error}</p> : null}
 
-            {error ? <p className="portal-error">{error}</p> : null}
+        <button type="submit" className="btn btn--primary" disabled={submitting}>
+          {submitting ? "Saving…" : "Update password"}
+        </button>
+      </form>
 
-            <button
-              type="submit"
-              className="btn btn--primary"
-              disabled={submitting}
-            >
-              {submitting ? "Saving…" : "Update password"}
-            </button>
-          </form>
-
-          <p className="portal-footer-text">
-            <Link to="/practice/login">Back to login</Link>
-          </p>
-        </div>
-      </div>
-    </div>
+      <p className="portal-footer-text">
+        <Link to="/practice/login">Back to login</Link>
+      </p>
+    </AuthLayout>
   );
 }

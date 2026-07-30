@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import AuthLayout from "../components/AuthLayout";
 import PracticeNameAutocomplete from "../components/PracticeNameAutocomplete";
 import { usePracticeAuth } from "../context/PracticeAuthContext";
 import type { ProspectClinic } from "../lib/api";
@@ -67,21 +68,12 @@ export default function PracticeSignupPage() {
   }
 
   return (
-    <div className="portal">
-      <div className="portal-inner">
-        <header className="portal-header">
-          <Link to="/" className="portal-back">
-            ← VetFin
-          </Link>
-          <h1 className="portal-title">Partner with VetFin</h1>
-          <p className="portal-lead">
-            Create your practice account, get a referral link and QR code, and
-            track every loan application from your clinic.
-          </p>
-        </header>
-
-        <div className="portal-card">
-          <form ref={formRef} className="portal-form" onSubmit={handleSubmit}>
+    <AuthLayout
+      wide
+      title="Partner with VetFin"
+      lead="Create your practice account, get a referral link and QR code, and track every loan application from your clinic."
+    >
+      <form ref={formRef} className="portal-form" onSubmit={handleSubmit}>
             <label className="portal-label">
               Practice name
               <PracticeNameAutocomplete
@@ -149,14 +141,11 @@ export default function PracticeSignupPage() {
             >
               {submitting ? "Creating account…" : "Create practice account"}
             </button>
-          </form>
+      </form>
 
-          <p className="portal-footer-text">
-            Already registered?{" "}
-            <Link to="/practice/login">Log in to your portal</Link>
-          </p>
-        </div>
-      </div>
-    </div>
+      <p className="portal-footer-text">
+        Already registered? <Link to="/practice/login">Log in to your portal</Link>
+      </p>
+    </AuthLayout>
   );
 }

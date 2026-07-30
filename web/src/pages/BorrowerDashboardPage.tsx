@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import DashboardShell, { type ShellNavItem } from "../components/DashboardShell";
+import { HomeIcon } from "../components/icons";
 import { useBorrowerAuth } from "../context/BorrowerAuthContext";
 import {
   cancelLoanApplication,
@@ -8,6 +10,10 @@ import {
   type LoanApplication,
 } from "../lib/api";
 import "./PracticePortal.css";
+
+const NAV_ITEMS: ShellNavItem[] = [
+  { to: "/borrower/dashboard", label: "My loans", icon: <HomeIcon /> },
+];
 
 function formatUsd(amount: number | null | undefined): string {
   if (amount == null) return "—";
@@ -231,30 +237,15 @@ export default function BorrowerDashboardPage() {
   const loans = dashboard?.loans ?? [];
 
   return (
-    <div className="portal">
-      <div className="portal-inner portal-inner--wide">
-        <div className="portal-topbar">
-          <Link to="/" className="portal-topbar-brand">
-            VetFin
-          </Link>
-          <div>
-            <span style={{ marginRight: "1rem", color: "var(--color-ink-muted)" }}>
-              {displayName}
-            </span>
-            <button type="button" className="btn btn--secondary" onClick={logout}>
-              Log out
-            </button>
-          </div>
-        </div>
-
-        <header className="portal-header">
-          <h1 className="portal-title">My loans</h1>
-          <p className="portal-lead">
-            View your applications and active loans, or apply for new financing
-            through a participating vet clinic.
-          </p>
-        </header>
-
+    <DashboardShell
+      homeTo="/borrower/dashboard"
+      navItems={NAV_ITEMS}
+      userLabel={displayName}
+      onLogout={logout}
+      title="My loans"
+      lead="View your applications and active loans, or apply for new financing through a participating vet clinic."
+    >
+      <div className="portal-inner portal-inner--wide portal-inner--shell">
         <section className="portal-card" style={{ marginBottom: "1.5rem" }}>
           <h2 style={{ marginTop: 0, fontFamily: "var(--font-display)" }}>
             Apply for a new loan
@@ -291,6 +282,6 @@ export default function BorrowerDashboardPage() {
           </div>
         )}
       </div>
-    </div>
+    </DashboardShell>
   );
 }

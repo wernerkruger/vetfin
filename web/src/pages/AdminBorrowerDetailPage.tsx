@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import AdminNav from "../components/AdminNav";
+import { adminNavItems } from "../components/AdminNav";
+import DashboardShell from "../components/DashboardShell";
+import { useAdminAuth } from "../context/AdminAuthContext";
 import {
   adminApproveApplication,
   adminDeclineApplication,
@@ -118,6 +120,7 @@ function borrowerName(borrower: BorrowerProfile): string {
 }
 
 export default function AdminBorrowerDetailPage() {
+  const { username, logout } = useAdminAuth();
   const { id } = useParams<{ id: string }>();
   const [borrower, setBorrower] = useState<BorrowerProfile | null>(null);
   const [applications, setApplications] = useState<AdminApplication[]>([]);
@@ -177,20 +180,16 @@ export default function AdminBorrowerDetailPage() {
   }
 
   return (
-    <div className="portal">
-      <div className="portal-inner portal-inner--wide">
-        <header className="portal-header">
-          <Link to="/admin" className="portal-back">
-            ← Admin
-          </Link>
-          <h1 className="portal-title">{borrowerName(borrower)}</h1>
-          <p className="portal-lead">
-            {borrower.email ?? "No email"} · Borrower account and loan applications
-          </p>
-        </header>
-
-        <AdminNav active="users" />
-
+    <DashboardShell
+      homeTo="/admin"
+      navItems={adminNavItems("users")}
+      userLabel={username}
+      onLogout={logout}
+      title={borrowerName(borrower)}
+      lead={`${borrower.email ?? "No email"} · Borrower account and loan applications`}
+      backTo={{ to: "/admin", label: "Admin" }}
+    >
+      <div className="portal-inner portal-inner--wide portal-inner--shell">
         <div className="portal-grid portal-grid--stats" style={{ marginBottom: "1.5rem" }}>
           <div className="portal-stat">
             <p className="portal-stat-value">{applications.length}</p>
@@ -276,6 +275,6 @@ export default function AdminBorrowerDetailPage() {
           </p>
         </section>
       </div>
-    </div>
+    </DashboardShell>
   );
 }

@@ -1,3 +1,4 @@
+import logoMarkWhite from "../assets/logo-mark-white.png";
 import "./Footer.css";
 
 export default function Footer() {
@@ -7,9 +8,7 @@ export default function Footer() {
     <footer className="footer">
       <div className="footer-inner">
         <div className="footer-brand">
-          <span className="logo-mark" aria-hidden="true">
-            VF
-          </span>
+          <img src={logoMarkWhite} alt="" aria-hidden="true" className="footer-logo-img" />
           <span className="footer-tagline">
             Veterinary bill financing, at the point of care.
           </span>

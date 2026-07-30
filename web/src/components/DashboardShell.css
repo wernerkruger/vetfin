@@ -1,0 +1,261 @@
+.shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--color-cream);
+}
+
+/* ---------- Sidebar ---------- */
+
+.shell-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 1.75rem 1.25rem 1.5rem;
+  background: linear-gradient(190deg, var(--color-teal-dark) 0%, var(--color-ink) 100%);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.shell-logo {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2.5rem;
+  padding: 0 0.5rem;
+}
+
+.shell-logo img {
+  height: 2.125rem;
+  width: auto;
+}
+
+.shell-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.shell-nav__link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--radius-sm);
+  color: rgba(255, 255, 255, 0.72);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  transition: background 0.15s, color 0.15s;
+}
+
+.shell-nav__icon {
+  display: flex;
+  opacity: 0.85;
+}
+
+.shell-nav__link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.shell-nav__link--active {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.shell-nav__link--active .shell-nav__icon {
+  color: var(--color-accent);
+  opacity: 1;
+}
+
+.shell-sidebar__footer {
+  margin-top: auto;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.shell-marketing-link {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-decoration: none;
+  padding: 0 0.5rem;
+}
+
+.shell-marketing-link:hover {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.shell-user {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0 0.5rem;
+}
+
+.shell-user__name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shell-logout {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.85);
+  padding: 0.4rem 0.7rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.shell-logout:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* ---------- Main content ---------- */
+
+.shell-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.shell-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  padding: 2.25rem 2.5rem 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.shell-topbar__text {
+  min-width: 0;
+}
+
+.shell-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+  text-decoration: none;
+  margin-bottom: 0.625rem;
+}
+
+.shell-back:hover {
+  color: var(--color-teal);
+}
+
+.shell-title {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 0 0 0.375rem;
+  color: var(--color-ink);
+  line-height: 1.2;
+}
+
+.shell-lead {
+  margin: 0;
+  color: var(--color-ink-muted);
+  font-size: 0.9375rem;
+  max-width: 46rem;
+}
+
+.shell-topbar__actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.shell-content {
+  padding: 2rem 2.5rem 3rem;
+  flex: 1;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 960px) {
+  .shell {
+    flex-direction: column;
+  }
+
+  .shell-sidebar {
+    position: relative;
+    top: auto;
+    height: auto;
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    padding: 0.875rem 1.25rem;
+    gap: 1.25rem;
+    overflow-x: auto;
+  }
+
+  .shell-logo {
+    margin-bottom: 0;
+    padding: 0;
+  }
+
+  .shell-nav {
+    flex-direction: row;
+    flex: 0 0 auto;
+    gap: 0.25rem;
+  }
+
+  .shell-nav__link {
+    white-space: nowrap;
+    padding: 0.5rem 0.7rem;
+  }
+
+  .shell-sidebar__footer {
+    margin-top: 0;
+    margin-left: auto;
+    padding-top: 0;
+    border-top: none;
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .shell-marketing-link {
+    display: none;
+  }
+
+  .shell-user__name {
+    display: none;
+  }
+
+  .shell-topbar,
+  .shell-content {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .shell-topbar {
+    flex-direction: column;
+  }
+}

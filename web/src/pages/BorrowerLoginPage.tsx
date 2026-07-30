@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import AuthLayout from "../components/AuthLayout";
 import { useBorrowerAuth } from "../context/BorrowerAuthContext";
 import "./PracticePortal.css";
 
@@ -35,52 +36,36 @@ export default function BorrowerLoginPage() {
   }
 
   return (
-    <div className="portal">
-      <div className="portal-inner">
-        <header className="portal-header">
-          <Link to="/" className="portal-back">
-            ← VetFin
-          </Link>
-          <h1 className="portal-title">Your account</h1>
-          <p className="portal-lead">
-            Log in to view your loans, track repayments, and apply for new
-            financing.
-          </p>
-        </header>
+    <AuthLayout
+      title="Your account"
+      lead="Log in to view your loans, track repayments, and apply for new financing."
+    >
+      <form className="portal-form" onSubmit={handleSubmit}>
+        <label className="portal-label">
+          Email
+          <input name="email" type="email" required autoComplete="email" />
+        </label>
+        <label className="portal-label">
+          Password
+          <input
+            name="password"
+            type="password"
+            required
+            autoComplete="current-password"
+          />
+        </label>
 
-        <div className="portal-card">
-          <form className="portal-form" onSubmit={handleSubmit}>
-            <label className="portal-label">
-              Email
-              <input name="email" type="email" required autoComplete="email" />
-            </label>
-            <label className="portal-label">
-              Password
-              <input
-                name="password"
-                type="password"
-                required
-                autoComplete="current-password"
-              />
-            </label>
+        {error ? <p className="portal-error">{error}</p> : null}
 
-            {error ? <p className="portal-error">{error}</p> : null}
+        <button type="submit" className="btn btn--primary" disabled={submitting}>
+          {submitting ? "Signing in…" : "Log in"}
+        </button>
+      </form>
 
-            <button
-              type="submit"
-              className="btn btn--primary"
-              disabled={submitting}
-            >
-              {submitting ? "Signing in…" : "Log in"}
-            </button>
-          </form>
-
-          <p className="portal-footer-text">
-            Applying through your vet? Use the referral link from your clinic to
-            start an application.
-          </p>
-        </div>
-      </div>
-    </div>
+      <p className="portal-footer-text">
+        Applying through your vet? Use the referral link from your clinic to
+        start an application.
+      </p>
+    </AuthLayout>
   );
 }
