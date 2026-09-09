@@ -60,6 +60,7 @@ echo "DATA_ENCRYPTION_KEY=$(openssl rand -base64 32)"
 **Option A — Elastic IP only (no domain yet)**
 
 ```env
+APP_ENV=production
 PUBLIC_APP_URL=http://<ELASTIC_IP>
 CORS_ORIGINS=http://<ELASTIC_IP>
 PLAID_CLIENT_ID=...
@@ -74,6 +75,7 @@ DATA_ENCRYPTION_KEY=<generated>
 Point a DNS **A record** at your Elastic IP first, then:
 
 ```env
+APP_ENV=production
 DOMAIN=app.yourdomain.com
 PUBLIC_APP_URL=https://app.yourdomain.com
 CORS_ORIGINS=https://app.yourdomain.com

@@ -1,4 +1,11 @@
 import { z } from "zod";
+import {
+  DEV_CORS_ORIGINS,
+  DEV_PUBLIC_APP_URL,
+  isLocalOrigin,
+  resolveAppEnv,
+  type AppEnv,
+} from "./env/appEnv.js";
 
 const envSchema = z.object({
   PLAID_CLIENT_ID: z.string().min(1),
@@ -36,9 +43,10 @@ function loadEnv() {
     );
   }
 
-  const isProduction = process.env.NODE_ENV === "production";
+  const appEnv = resolveAppEnv();
+  const isNodeProduction = process.env.NODE_ENV === "production";
   const devJwtDefault = "dev-only-change-me-vetfin-jwt-secret-32chars";
-  if (isProduction) {
+  if (isNodeProduction) {
     if (!data.DATA_ENCRYPTION_KEY) {
       throw new Error(
         "DATA_ENCRYPTION_KEY is required in production (min 16 characters).",
@@ -49,19 +57,65 @@ function loadEnv() {
     }
   }
 
+  const { publicAppUrl, corsOrigins, warnings } = resolvePublicUrls(
+    appEnv,
+    data.PUBLIC_APP_URL,
+    data.CORS_ORIGINS,
+  );
+  for (const warning of warnings) {
+    console.warn(warning);
+  }
+
   return {
+    appEnv,
     plaidClientId: data.PLAID_CLIENT_ID,
     plaidSecret: secret,
     plaidEnv: data.PLAID_ENV,
     port: data.PORT,
-    corsOrigins: data.CORS_ORIGINS.split(",").map((o) => o.trim()),
+    corsOrigins,
     databasePath: data.DATABASE_PATH,
     dataEncryptionKey: data.DATA_ENCRYPTION_KEY,
     jwtSecret: data.JWT_SECRET,
-    publicAppUrl: data.PUBLIC_APP_URL,
+    publicAppUrl,
     adminUsername: data.ADMIN_USERNAME,
     adminPasswordHash: resolveAdminPasswordHash(data),
   };
+}
+
+function resolvePublicUrls(
+  appEnv: AppEnv,
+  configuredPublicUrl: string,
+  configuredCors: string,
+): { publicAppUrl: string; corsOrigins: string[]; warnings: string[] } {
+  const warnings: string[] = [];
+  let publicAppUrl = configuredPublicUrl.replace(/\/$/, "");
+  let corsOrigins = configuredCors
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean);
+
+  if (appEnv === "development") {
+    if (!isLocalOrigin(publicAppUrl)) {
+      warnings.push(
+        `[dev] PUBLIC_APP_URL=${publicAppUrl} is not localhost — using ${DEV_PUBLIC_APP_URL}. ` +
+          `Keep AWS/public hosts in the server api/.env only (APP_ENV=production).`,
+      );
+      publicAppUrl = DEV_PUBLIC_APP_URL;
+    }
+    for (const origin of DEV_CORS_ORIGINS) {
+      if (!corsOrigins.includes(origin)) corsOrigins.push(origin);
+    }
+    return { publicAppUrl, corsOrigins, warnings };
+  }
+
+  // APP_ENV=production
+  if (isLocalOrigin(publicAppUrl)) {
+    throw new Error(
+      "APP_ENV=production requires PUBLIC_APP_URL to be your public site URL (not localhost). " +
+        "See deploy/aws/.env.production.example",
+    );
+  }
+  return { publicAppUrl, corsOrigins, warnings };
 }
 
 function resolveAdminPasswordHash(

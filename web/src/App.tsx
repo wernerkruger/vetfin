@@ -9,6 +9,7 @@ import AdminBiPage from "./pages/AdminBiPage";
 import AdminBorrowerDetailPage from "./pages/AdminBorrowerDetailPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminDisbursementsPage from "./pages/AdminDisbursementsPage";
+import AdminNewLoansPage from "./pages/AdminNewLoansPage";
 import AdminProspectClinicsPage from "./pages/AdminProspectClinicsPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import ApplyPage from "./pages/ApplyPage";
@@ -21,6 +22,7 @@ import PlaidTestPage from "./pages/PlaidTestPage";
 import PracticeChangePasswordPage from "./pages/PracticeChangePasswordPage";
 import PracticeDashboardPage from "./pages/PracticeDashboardPage";
 import PracticeLoginPage from "./pages/PracticeLoginPage";
+import PracticeLoansPage from "./pages/PracticeLoansPage";
 import PracticeSignupPage from "./pages/PracticeSignupPage";
 
 export default function App() {
@@ -47,6 +49,7 @@ export default function App() {
                   path="/admin/disbursements"
                   element={<AdminDisbursementsPage />}
                 />
+                <Route path="/admin/new-loans" element={<AdminNewLoansPage />} />
                 <Route path="/admin/bi" element={<AdminBiPage />} />
                 <Route
                   path="/admin/clinics"
@@ -57,6 +60,10 @@ export default function App() {
                 <Route
                   path="/practice/dashboard"
                   element={<PracticeDashboardPage />}
+                />
+                <Route
+                  path="/practice/loans/:filter"
+                  element={<PracticeLoansPage />}
                 />
                 <Route
                   path="/practice/change-password"

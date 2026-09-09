@@ -1,9 +1,35 @@
 import type { ShellNavItem } from "./DashboardShell";
-import { BanknoteIcon, BuildingIcon, ChartIcon, UsersIcon } from "./icons";
+import {
+  BanknoteIcon,
+  BuildingIcon,
+  ChartIcon,
+  ClipboardIcon,
+  UsersIcon,
+} from "./icons";
 
-export type AdminSection = "users" | "disbursements" | "bi" | "clinics";
+export type AdminSection =
+  | "users"
+  | "new-loans"
+  | "disbursements"
+  | "bi"
+  | "clinics";
 
-export function adminNavItems(active: AdminSection): ShellNavItem[] {
+export function adminNavItems(
+  active: AdminSection,
+  opts?: { newLoansCount?: number; pendingDisbursementsCount?: number },
+): ShellNavItem[] {
+  const newLoansCount = opts?.newLoansCount;
+  const newLoansLabel =
+    typeof newLoansCount === "number"
+      ? `New loans (${newLoansCount})`
+      : "New loans";
+
+  const disbursementsCount = opts?.pendingDisbursementsCount;
+  const disbursementsLabel =
+    typeof disbursementsCount === "number"
+      ? `Disbursements (${disbursementsCount})`
+      : "Disbursements";
+
   return [
     {
       to: "/admin",
@@ -12,8 +38,14 @@ export function adminNavItems(active: AdminSection): ShellNavItem[] {
       active: active === "users",
     },
     {
+      to: "/admin/new-loans",
+      label: newLoansLabel,
+      icon: <ClipboardIcon />,
+      active: active === "new-loans",
+    },
+    {
       to: "/admin/disbursements",
-      label: "Disbursements",
+      label: disbursementsLabel,
       icon: <BanknoteIcon />,
       active: active === "disbursements",
     },

@@ -7,7 +7,10 @@ services:
     env_file:
       - ./api/.env
     environment:
+      # Security checks (encryption key / JWT). Public URLs still follow APP_ENV from api/.env.
       NODE_ENV: production
+      # Local compose: leave APP_ENV unset/development + PUBLIC_APP_URL=http://localhost in api/.env.
+      # AWS: set APP_ENV=production and the real host (see deploy/aws/.env.production.example).
       HOST: 0.0.0.0
       PORT: 3001
       DATABASE_PATH: /data/vetfin.sqlite

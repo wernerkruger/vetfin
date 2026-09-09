@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { adminNavItems } from "../components/AdminNav";
+import { useAdminNavItems, notifyAdminPendingDisbursementsChanged } from "../components/useAdminNavItems";
 import DashboardShell from "../components/DashboardShell";
 import { useAdminAuth } from "../context/AdminAuthContext";
 import {
@@ -17,6 +17,7 @@ function formatMoney(amount: number | null): string {
 
 export default function AdminDisbursementsPage() {
   const { username, logout } = useAdminAuth();
+  const navItems = useAdminNavItems("disbursements");
   const [disbursements, setDisbursements] = useState<AdminDisbursement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,6 +28,7 @@ export default function AdminDisbursementsPage() {
     try {
       const data = await fetchAdminDisbursements();
       setDisbursements(data.disbursements);
+      notifyAdminPendingDisbursementsChanged();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load disbursements");
     } finally {
@@ -65,7 +67,7 @@ export default function AdminDisbursementsPage() {
   return (
     <DashboardShell
       homeTo="/admin"
-      navItems={adminNavItems("disbursements")}
+      navItems={navItems}
       userLabel={username}
       onLogout={logout}
       title="Disbursements"

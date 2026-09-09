@@ -10,7 +10,10 @@ import {
   adminApproveApplication,
   adminDeclineApplication,
   adminMarkDisbursementSent,
+  countAdminPendingDisbursements,
+  countAdminPendingFundingApplications,
   listAdminDisbursements,
+  listAdminPendingFundingApplications,
   toPublicApplication,
 } from "../db/applications.js";
 import { getPracticeById } from "../db/practices.js";
@@ -110,6 +113,18 @@ export function adminRouter(): Router {
     }
   });
 
+  router.get("/applications/pending-funding", requireAdminAuth, (_req, res) => {
+    const applications = listAdminPendingFundingApplications();
+    res.json({
+      applications,
+      count: applications.length,
+    });
+  });
+
+  router.get("/applications/pending-funding/count", requireAdminAuth, (_req, res) => {
+    res.json({ count: countAdminPendingFundingApplications() });
+  });
+
   router.post(
     "/applications/:applicationId/approve",
     requireAdminAuth,
@@ -149,6 +164,10 @@ export function adminRouter(): Router {
       }
     },
   );
+
+  router.get("/disbursements/pending-count", requireAdminAuth, (_req, res) => {
+    res.json({ count: countAdminPendingDisbursements() });
+  });
 
   router.get("/disbursements", requireAdminAuth, (_req, res) => {
     res.json({ disbursements: listAdminDisbursements() });

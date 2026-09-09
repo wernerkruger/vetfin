@@ -1,7 +1,5 @@
+import "./cryptoPolyfill.js";
 import dotenv from "dotenv";
-
-dotenv.config({ path: ".env" });
-dotenv.config({ path: ".env.local", override: true });
 import cors from "cors";
 import express from "express";
 import { getConfig } from "./config.js";
@@ -15,6 +13,9 @@ import { practicesRouter } from "./routes/practices.js";
 import { referralRouter } from "./routes/referral.js";
 import { adminRouter } from "./routes/admin.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+
+dotenv.config({ path: ".env" });
+dotenv.config({ path: ".env.local", override: true });
 
 const config = getConfig();
 getDb();
@@ -76,6 +77,7 @@ const host = process.env.HOST ?? "0.0.0.0";
 
 const server = app.listen(config.port, host, () => {
   console.log(`VetFin API listening on http://${host}:${config.port}`);
+  console.log(`APP_ENV: ${config.appEnv} | Public app URL: ${config.publicAppUrl}`);
   console.log(`Plaid environment: ${config.plaidEnv}`);
 });
 

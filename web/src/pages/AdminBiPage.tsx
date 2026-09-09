@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { adminNavItems } from "../components/AdminNav";
 import DashboardShell from "../components/DashboardShell";
+import { useAdminNavItems } from "../components/useAdminNavItems";
 import { useAdminAuth } from "../context/AdminAuthContext";
 import { fetchAdminBi, type AdminBiAnalytics } from "../lib/api";
 import "./PracticePortal.css";
@@ -119,6 +119,7 @@ function RepaymentBucketTable({
 
 export default function AdminBiPage() {
   const { username, logout } = useAdminAuth();
+  const navItems = useAdminNavItems("bi");
   const [data, setData] = useState<AdminBiAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -135,7 +136,7 @@ export default function AdminBiPage() {
   return (
     <DashboardShell
       homeTo="/admin"
-      navItems={adminNavItems("bi")}
+      navItems={navItems}
       userLabel={username}
       onLogout={logout}
       title="Business intelligence"

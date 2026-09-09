@@ -673,6 +673,11 @@ export type AdminApplication = LoanApplication & {
   canDeclineFunding: boolean;
 };
 
+export type AdminPendingFundingApplication = AdminApplication & {
+  borrowerName: string;
+  borrowerEmail: string | null;
+};
+
 export type AdminBorrowerDetail = {
   borrower: BorrowerProfile;
   applications: AdminApplication[];
@@ -733,6 +738,25 @@ export async function adminResetUserPassword(
 
 export async function fetchAdminBorrower(id: string) {
   return adminFetch<AdminBorrowerDetail>(`/api/admin/borrowers/${id}`);
+}
+
+export async function fetchAdminPendingFundingApplications() {
+  return adminFetch<{
+    applications: AdminPendingFundingApplication[];
+    count: number;
+  }>("/api/admin/applications/pending-funding");
+}
+
+export async function fetchAdminPendingFundingCount() {
+  return adminFetch<{ count: number }>(
+    "/api/admin/applications/pending-funding/count",
+  );
+}
+
+export async function fetchAdminPendingDisbursementsCount() {
+  return adminFetch<{ count: number }>(
+    "/api/admin/disbursements/pending-count",
+  );
 }
 
 export async function adminApproveApplication(applicationId: string) {

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { adminNavItems } from "../components/AdminNav";
+import { useAdminNavItems } from "../components/useAdminNavItems";
 import DashboardShell from "../components/DashboardShell";
 import { useAdminAuth } from "../context/AdminAuthContext";
 import {
@@ -109,6 +109,7 @@ function UserTable({
 
 export default function AdminDashboardPage() {
   const { username, logout } = useAdminAuth();
+  const navItems = useAdminNavItems("users");
   const [tab, setTab] = useState<AdminTab>("practices");
   const [practices, setPractices] = useState<AdminUser[]>([]);
   const [borrowers, setBorrowers] = useState<AdminUser[]>([]);
@@ -182,7 +183,7 @@ export default function AdminDashboardPage() {
   return (
     <DashboardShell
       homeTo="/admin"
-      navItems={adminNavItems("users")}
+      navItems={navItems}
       userLabel={username}
       onLogout={logout}
       title="Admin"

@@ -18,6 +18,8 @@ type DashboardShellProps = {
   navItems: ShellNavItem[];
   userLabel?: string | null;
   onLogout: () => void;
+  /** Optional org/practice name shown large above the page title. */
+  orgName?: string | null;
   title: string;
   lead?: ReactNode;
   /** Optional "← Back" link shown above the title, e.g. detail pages. */
@@ -31,6 +33,7 @@ export default function DashboardShell({
   navItems,
   userLabel,
   onLogout,
+  orgName,
   title,
   lead,
   backTo,
@@ -85,6 +88,7 @@ export default function DashboardShell({
                 {backTo.label}
               </Link>
             ) : null}
+            {orgName ? <p className="shell-org-name">{orgName}</p> : null}
             <h1 className="shell-title">{title}</h1>
             {lead ? <p className="shell-lead">{lead}</p> : null}
           </div>

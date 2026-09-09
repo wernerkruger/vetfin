@@ -16,14 +16,18 @@ Plaid sandbox helpers in Lawfi: `sandbox_public_token`, `sandbox_processor_token
 ## Setup
 
 1. Create a [Plaid developer account](https://dashboard.plaid.com/) and copy **sandbox** keys.
-2. Copy env template and fill in keys:
+2. Copy the **local** env template (not the AWS production example):
 
 ```bash
 cd api
-cp .env.example .env.local
-# Edit .env.local — use the same variable names as Lawfi if you share a Doppler/1Password entry:
-#   PLAID_CLIENT_ID, PLAID_CLIENT_SECRET (or PLAID_SECRET)
+cp .env.example .env
+# Optional hard override for hosts (recommended if .env ever gets AWS values mixed in):
+cp .env.local.example .env.local
+# Edit .env — PLAID_CLIENT_ID, PLAID_SECRET (or PLAID_CLIENT_SECRET)
+# Keep APP_ENV=development and PUBLIC_APP_URL=http://localhost:5173
 ```
+
+AWS / EC2 uses `deploy/aws/.env.production.example` → `api/.env` on the server only (`APP_ENV=production`).
 
 3. Install and run:
 

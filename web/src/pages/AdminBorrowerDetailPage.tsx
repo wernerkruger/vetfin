@@ -1,114 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { adminNavItems } from "../components/AdminNav";
+import AdminApplicationsTable from "../components/AdminApplicationsTable";
 import DashboardShell from "../components/DashboardShell";
+import { useAdminNavItems, notifyAdminPendingDisbursementsChanged, notifyAdminPendingFundingChanged } from "../components/useAdminNavItems";
 import { useAdminAuth } from "../context/AdminAuthContext";
 import {
-  adminApproveApplication,
-  adminDeclineApplication,
   fetchAdminBorrower,
   type AdminApplication,
   type BorrowerProfile,
 } from "../lib/api";
 import "./PracticePortal.css";
-
-function formatMoney(amount: number | null): string {
-  if (amount == null) return "—";
-  return `$${amount.toLocaleString()}`;
-}
-
-function ApplicationActions({
-  application,
-  busyId,
-  onUpdated,
-}: {
-  application: AdminApplication;
-  busyId: string | null;
-  onUpdated: () => void;
-}) {
-  const [error, setError] = useState<string | null>(null);
-  const [confirmDecline, setConfirmDecline] = useState(false);
-  const busy = busyId === application.id;
-
-  if (!application.canApproveFunding && !application.canDeclineFunding) {
-    return <span className="portal-muted">—</span>;
-  }
-
-  async function handleApprove() {
-    setError(null);
-    try {
-      await adminApproveApplication(application.id);
-      onUpdated();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not approve");
-    }
-  }
-
-  async function handleDecline() {
-    setError(null);
-    try {
-      await adminDeclineApplication(application.id);
-      setConfirmDecline(false);
-      onUpdated();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not decline");
-    }
-  }
-
-  if (confirmDecline) {
-    return (
-      <div className="practice-review-actions">
-        <p className="practice-review-hint">Decline funding for this application?</p>
-        {error ? <p className="portal-error">{error}</p> : null}
-        <div className="practice-review-buttons">
-          <button
-            type="button"
-            className="btn btn--secondary btn--small"
-            disabled={busy}
-            onClick={() => {
-              setConfirmDecline(false);
-              setError(null);
-            }}
-          >
-            Back
-          </button>
-          <button
-            type="button"
-            className="btn btn--danger btn--small"
-            disabled={busy}
-            onClick={() => void handleDecline()}
-          >
-            {busy ? "…" : "Confirm decline"}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="practice-review-actions">
-      {error ? <p className="portal-error">{error}</p> : null}
-      <div className="practice-review-buttons">
-        <button
-          type="button"
-          className="btn btn--primary btn--small"
-          disabled={busy}
-          onClick={() => void handleApprove()}
-        >
-          {busy ? "…" : "Approve"}
-        </button>
-        <button
-          type="button"
-          className="btn btn--secondary btn--small"
-          disabled={busy}
-          onClick={() => setConfirmDecline(true)}
-        >
-          Decline
-        </button>
-      </div>
-    </div>
-  );
-}
 
 function borrowerName(borrower: BorrowerProfile): string {
   return (
@@ -121,6 +22,7 @@ function borrowerName(borrower: BorrowerProfile): string {
 
 export default function AdminBorrowerDetailPage() {
   const { username, logout } = useAdminAuth();
+  const navItems = useAdminNavItems("users");
   const { id } = useParams<{ id: string }>();
   const [borrower, setBorrower] = useState<BorrowerProfile | null>(null);
   const [applications, setApplications] = useState<AdminApplication[]>([]);
@@ -150,6 +52,8 @@ export default function AdminBorrowerDetailPage() {
     setBusyId(applicationId);
     try {
       await load();
+      notifyAdminPendingFundingChanged();
+      notifyAdminPendingDisbursementsChanged();
     } finally {
       setBusyId(null);
     }
@@ -182,7 +86,7 @@ export default function AdminBorrowerDetailPage() {
   return (
     <DashboardShell
       homeTo="/admin"
-      navItems={adminNavItems("users")}
+      navItems={navItems}
       userLabel={username}
       onLogout={logout}
       title={borrowerName(borrower)}
@@ -213,62 +117,12 @@ export default function AdminBorrowerDetailPage() {
           <h2 style={{ marginTop: 0, fontFamily: "var(--font-display)" }}>
             Loan applications
           </h2>
-          {applications.length === 0 ? (
-            <p className="portal-status">No loan applications yet.</p>
-          ) : (
-            <div className="portal-table-wrap">
-              <table className="portal-table">
-                <thead>
-                  <tr>
-                    <th>Clinic</th>
-                    <th>Amount</th>
-                    <th>Service</th>
-                    <th>Pet</th>
-                    <th>Status</th>
-                    <th>Clinic review</th>
-                    <th>Disbursement</th>
-                    <th>Updated</th>
-                    <th>Funding</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {applications.map((app) => (
-                    <tr key={app.id}>
-                      <td>{app.practiceName ?? app.referralSlug}</td>
-                      <td>{formatMoney(app.loanAmount)}</td>
-                      <td>{app.serviceType?.replace(/_/g, " ") ?? "—"}</td>
-                      <td>{app.animalName ?? app.animalType ?? "—"}</td>
-                      <td>
-                        <span className={`portal-badge portal-badge--${app.status}`}>
-                          {app.statusLabel}
-                        </span>
-                      </td>
-                      <td>{app.practiceStatusLabel}</td>
-                      <td>
-                        {app.disbursementStatusLabel ? (
-                          <span
-                            className={`portal-badge portal-badge--disbursement-${app.disbursementStatus}`}
-                          >
-                            {app.disbursementStatusLabel}
-                          </span>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td>{new Date(app.updatedAt).toLocaleDateString()}</td>
-                      <td>
-                        <ApplicationActions
-                          application={app}
-                          busyId={busyId}
-                          onUpdated={() => void handleApplicationUpdated(app.id)}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <AdminApplicationsTable
+            applications={applications}
+            busyId={busyId}
+            emptyMessage="No loan applications yet."
+            onUpdated={(id) => void handleApplicationUpdated(id)}
+          />
           <p className="portal-field-hint" style={{ marginTop: "1rem" }}>
             Funding decisions require clinic confirmation first. Approved or declined
             applications appear on the vet practice dashboard with the same status.

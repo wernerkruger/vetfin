@@ -461,16 +461,87 @@ export function listApplicationsForAdmin(customerId: string) {
     )
     .all(customerId) as Array<LoanApplicationRow & { practice_name: string }>;
 
+  return rows.map(mapAdminApplicationRow);
+}
+
+/** Clinic-confirmed applications awaiting VetFin funding approve/decline. */
+export function listAdminPendingFundingApplications() {
+  const rows = getDb()
+    .prepare(
+      `SELECT
+         la.*,
+         vp.name AS practice_name,
+         c.email AS borrower_email,
+         c.applicant_name,
+         c.first_name,
+         c.last_name
+       FROM loan_applications la
+       INNER JOIN vet_practices vp ON vp.id = la.practice_id
+       INNER JOIN customers c ON c.id = la.customer_id
+       WHERE la.status = 'submitted'
+         AND la.vet_approved = 1
+       ORDER BY la.updated_at DESC`,
+    )
+    .all() as Array<
+    LoanApplicationRow & {
+      practice_name: string;
+      borrower_email: string | null;
+      applicant_name: string | null;
+      first_name: string | null;
+      last_name: string | null;
+    }
+  >;
+
   return rows.map((row) => {
-    const vetApproved = normalizeVetApproved(row.vet_approved);
-    const publicApp = toPublicApplication(row, { name: row.practice_name });
+    const borrowerName =
+      row.applicant_name?.trim() ||
+      [row.first_name, row.last_name].filter(Boolean).join(" ") ||
+      row.borrower_email ||
+      "Borrower";
+
     return {
-      ...publicApp,
-      practiceStatusLabel: practiceStatusLabel(row.status, vetApproved),
-      canApproveFunding: row.status === "submitted" && vetApproved === 1,
-      canDeclineFunding: row.status === "submitted" && vetApproved === 1,
+      ...mapAdminApplicationRow(row),
+      borrowerName,
+      borrowerEmail: row.borrower_email,
     };
   });
+}
+
+export function countAdminPendingFundingApplications(): number {
+  const row = getDb()
+    .prepare(
+      `SELECT COUNT(*) AS n
+       FROM loan_applications
+       WHERE status = 'submitted'
+         AND vet_approved = 1`,
+    )
+    .get() as { n: number };
+  return row.n ?? 0;
+}
+
+export function countAdminPendingDisbursements(): number {
+  const row = getDb()
+    .prepare(
+      `SELECT COUNT(*) AS n
+       FROM loan_applications
+       WHERE status = 'approved'
+         AND disbursement_status = 'pending'`,
+    )
+    .get() as { n: number };
+  return row.n ?? 0;
+}
+
+function mapAdminApplicationRow(
+  row: LoanApplicationRow & { practice_name: string },
+) {
+  const vetApproved = normalizeVetApproved(row.vet_approved);
+  const publicApp = toPublicApplication(row, { name: row.practice_name });
+  return {
+    ...publicApp,
+    practiceStatusLabel: practiceStatusLabel(row.status, vetApproved),
+    canApproveFunding: row.status === "submitted" && vetApproved === 1,
+    canDeclineFunding: row.status === "submitted" && vetApproved === 1,
+  };
 }
 
 export type AdminDisbursementRow = {

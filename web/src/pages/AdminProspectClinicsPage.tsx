@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { adminNavItems } from "../components/AdminNav";
 import DashboardShell from "../components/DashboardShell";
+import { useAdminNavItems } from "../components/useAdminNavItems";
 import { useAdminAuth } from "../context/AdminAuthContext";
 import {
   fetchAdminProspectClinics,
@@ -59,6 +59,7 @@ function SignedUpBadge({ clinic }: { clinic: ProspectClinic }) {
 
 export default function AdminProspectClinicsPage() {
   const { username, logout } = useAdminAuth();
+  const navItems = useAdminNavItems("clinics");
   const [filters, setFilters] = useState<AdminProspectClinicFilters>(emptyFilters);
   const [clinics, setClinics] = useState<ProspectClinic[]>([]);
   const [total, setTotal] = useState(0);
@@ -164,7 +165,7 @@ export default function AdminProspectClinicsPage() {
   return (
     <DashboardShell
       homeTo="/admin"
-      navItems={adminNavItems("clinics")}
+      navItems={navItems}
       userLabel={username}
       onLogout={logout}
       title="Prospect clinics"
