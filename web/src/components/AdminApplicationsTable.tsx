@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 import {
   adminApproveApplication,
   adminDeclineApplication,
+  adminMarkOriginationFeePaid,
   type AdminApplication,
 } from "../lib/api";
+import { formatPct, formatTimestamp, formatUsdCents } from "../lib/format";
 import "../pages/PracticePortal.css";
 
 function formatMoney(amount: number | null): string {
@@ -25,8 +27,22 @@ function ApplicationActions({
   const [confirmDecline, setConfirmDecline] = useState(false);
   const busy = busyId === application.id;
 
-  if (!application.canApproveFunding && !application.canDeclineFunding) {
+  if (
+    !application.canApproveFunding &&
+    !application.canDeclineFunding &&
+    !application.canMarkOriginationFeePaid
+  ) {
     return <span className="portal-muted">—</span>;
+  }
+
+  async function handleMarkFeePaid() {
+    setError(null);
+    try {
+      await adminMarkOriginationFeePaid(application.id);
+      onUpdated();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not record fee");
+    }
   }
 
   async function handleApprove() {
@@ -53,7 +69,9 @@ function ApplicationActions({
   if (confirmDecline) {
     return (
       <div className="practice-review-actions">
-        <p className="practice-review-hint">Decline funding for this application?</p>
+        <p className="practice-review-hint">
+          Decline funding for this application?
+        </p>
         {error ? <p className="portal-error">{error}</p> : null}
         <div className="practice-review-buttons">
           <button
@@ -84,22 +102,36 @@ function ApplicationActions({
     <div className="practice-review-actions">
       {error ? <p className="portal-error">{error}</p> : null}
       <div className="practice-review-buttons">
-        <button
-          type="button"
-          className="btn btn--primary btn--small"
-          disabled={busy}
-          onClick={() => void handleApprove()}
-        >
-          {busy ? "…" : "Approve"}
-        </button>
-        <button
-          type="button"
-          className="btn btn--secondary btn--small"
-          disabled={busy}
-          onClick={() => setConfirmDecline(true)}
-        >
-          Decline
-        </button>
+        {application.canMarkOriginationFeePaid ? (
+          <button
+            type="button"
+            className="btn btn--primary btn--small"
+            disabled={busy}
+            onClick={() => void handleMarkFeePaid()}
+          >
+            {busy ? "…" : "Mark fee paid"}
+          </button>
+        ) : null}
+        {application.canApproveFunding ? (
+          <button
+            type="button"
+            className="btn btn--primary btn--small"
+            disabled={busy}
+            onClick={() => void handleApprove()}
+          >
+            {busy ? "…" : "Approve"}
+          </button>
+        ) : null}
+        {application.canDeclineFunding ? (
+          <button
+            type="button"
+            className="btn btn--secondary btn--small"
+            disabled={busy}
+            onClick={() => setConfirmDecline(true)}
+          >
+            Decline
+          </button>
+        ) : null}
       </div>
     </div>
   );
@@ -137,7 +169,7 @@ export default function AdminApplicationsTable({
           <tr>
             {showBorrower ? <th>Borrower</th> : null}
             <th>Clinic</th>
-            <th>Amount</th>
+            <th>Amount &amp; plan</th>
             <th>Service</th>
             <th>Pet</th>
             <th>Status</th>
@@ -158,7 +190,51 @@ export default function AdminApplicationsTable({
                 </td>
               ) : null}
               <td>{app.practiceName ?? app.referralSlug}</td>
-              <td>{formatMoney(app.loanAmount)}</td>
+              <td>
+                {[
+                  "draft",
+                  "profile_complete",
+                  "loan_details",
+                  "bank_linked",
+                  "plan_selected",
+                ].includes(app.status) ? (
+                  formatMoney(app.loanAmount)
+                ) : (
+                  <Link to={`/admin/loans/${app.id}`}>
+                    {formatMoney(app.loanAmount)}
+                  </Link>
+                )}
+                {app.repaymentPlan ? (
+                  <small style={{ display: "block", whiteSpace: "nowrap" }}>
+                    {app.repaymentPlan.termMonths} mo ·{" "}
+                    {formatUsdCents(app.repaymentPlan.monthlyPayment)}/mo
+                    <br />
+                    <span style={{ color: "var(--color-ink-muted)" }}>
+                      {formatPct(app.repaymentPlan.apr)} APR ·{" "}
+                      <span
+                        title={
+                          app.repaymentPlan.tilaAcceptedAt
+                            ? `Signed ${formatTimestamp(app.repaymentPlan.tilaAcceptedAt)}`
+                            : undefined
+                        }
+                      >
+                        {app.repaymentPlan.tilaAcceptedAt
+                          ? "TILA signed"
+                          : "TILA not signed"}
+                      </span>
+                      <br />
+                      Fee {formatUsdCents(
+                        app.repaymentPlan.originationFee,
+                      )}{" "}
+                      {app.repaymentPlan.originationFeeStatus === "paid" ? (
+                        "paid"
+                      ) : (
+                        <strong style={{ color: "#9a5b00" }}>due</strong>
+                      )}
+                    </span>
+                  </small>
+                ) : null}
+              </td>
               <td>{app.serviceType?.replace(/_/g, " ") ?? "—"}</td>
               <td>{app.animalName ?? app.animalType ?? "—"}</td>
               <td>

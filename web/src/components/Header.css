@@ -93,6 +93,63 @@
   border-radius: 1px;
 }
 
+/* LOG IN dropdown (client / vet clinic) */
+.login-menu {
+  position: relative;
+}
+
+.login-toggle {
+  font-size: 0.9375rem;
+  padding: 0.5rem 1rem;
+  letter-spacing: 0.02em;
+}
+
+.login-caret {
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.login-options {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  min-width: 17rem;
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem;
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  z-index: 110;
+}
+
+.login-option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.75rem 0.875rem;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  color: var(--color-ink);
+}
+
+.login-option:hover,
+.login-option:focus-visible {
+  background: var(--color-cream);
+  color: var(--color-ink);
+}
+
+.login-option-title {
+  font-weight: 700;
+  color: var(--color-teal);
+}
+
+.login-option-desc {
+  font-size: 0.8125rem;
+  color: var(--color-ink-muted);
+}
+
 @media (max-width: 768px) {
   .menu-toggle {
     display: flex;
@@ -127,5 +184,16 @@
 
   .nav-cta {
     width: 100%;
+  }
+
+  .login-toggle {
+    width: 100%;
+  }
+
+  .login-options {
+    position: static;
+    margin-top: 0.5rem;
+    min-width: 0;
+    box-shadow: none;
   }
 }

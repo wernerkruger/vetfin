@@ -59,7 +59,11 @@ export function plaidRouter(plaid: PlaidApi): Router {
     res.json({
       environment: config.plaidEnv,
       sandboxInstitutionId: SANDBOX_INSTITUTION_ID,
-      databasePath: config.databasePath,
+      // Only show connection details (password masked) in development.
+      databasePath:
+        config.appEnv === "development"
+          ? config.database.displayUrl
+          : "postgres",
       encryptionEnabled: Boolean(config.dataEncryptionKey),
     });
   });
@@ -67,9 +71,9 @@ export function plaidRouter(plaid: PlaidApi): Router {
   router.post("/link-token", async (req, res, next) => {
     try {
       const body = linkTokenBody.parse(req.body);
-      requireCustomer(body.customerId);
+      await requireCustomer(body.customerId);
 
-      const existingItem = getLatestPlaidItemForCustomer(body.customerId);
+      const existingItem = await getLatestPlaidItemForCustomer(body.customerId);
       const linkToken = await createLinkToken(plaid, {
         clientUserId: body.clientUserId ?? body.customerId,
         accessToken: existingItem?.access_token_plain,
@@ -83,10 +87,10 @@ export function plaidRouter(plaid: PlaidApi): Router {
   router.post("/exchange-public-token", async (req, res, next) => {
     try {
       const body = exchangeBody.parse(req.body);
-      requireCustomer(body.customerId);
+      await requireCustomer(body.customerId);
 
       const tokens = await exchangePublicToken(plaid, body.publicToken);
-      const plaidItem = savePlaidItem({
+      const plaidItem = await savePlaidItem({
         customerId: body.customerId,
         itemId: tokens.itemId,
         accessToken: tokens.accessToken,
@@ -116,12 +120,12 @@ export function plaidRouter(plaid: PlaidApi): Router {
 
     try {
       const { customerId } = sandboxExchangeBody.parse(req.body);
-      requireCustomer(customerId);
+      await requireCustomer(customerId);
 
       const { institutionId } = sandboxPublicTokenQuery.parse(req.query);
       const publicToken = await createSandboxPublicToken(plaid, institutionId);
       const tokens = await exchangePublicToken(plaid, publicToken);
-      const plaidItem = savePlaidItem({
+      const plaidItem = await savePlaidItem({
         customerId,
         itemId: tokens.itemId,
         accessToken: tokens.accessToken,
@@ -143,7 +147,8 @@ export function plaidRouter(plaid: PlaidApi): Router {
   router.post("/sandbox/public-token", async (req, res, next) => {
     if (config.plaidEnv !== "sandbox") {
       res.status(403).json({
-        error: "Sandbox public token creation is only allowed when PLAID_ENV=sandbox",
+        error:
+          "Sandbox public token creation is only allowed when PLAID_ENV=sandbox",
       });
       return;
     }
@@ -167,8 +172,8 @@ export function plaidRouter(plaid: PlaidApi): Router {
     }
 
     try {
-      requireCustomer(parsed.data.customerId);
-      const item = getLatestPlaidItemForCustomer(parsed.data.customerId);
+      await requireCustomer(parsed.data.customerId);
+      const item = await getLatestPlaidItemForCustomer(parsed.data.customerId);
       if (!item) {
         res.status(404).json({ error: "No Plaid item for this customer" });
         return;
@@ -183,9 +188,13 @@ export function plaidRouter(plaid: PlaidApi): Router {
 
   router.get("/auth", async (req, res, next) => {
     const customerId =
-      typeof req.query.customerId === "string" ? req.query.customerId : undefined;
+      typeof req.query.customerId === "string"
+        ? req.query.customerId
+        : undefined;
     const accessToken =
-      typeof req.query.accessToken === "string" ? req.query.accessToken : undefined;
+      typeof req.query.accessToken === "string"
+        ? req.query.accessToken
+        : undefined;
 
     const accountIds =
       typeof req.query.accountIds === "string"
@@ -195,8 +204,8 @@ export function plaidRouter(plaid: PlaidApi): Router {
     try {
       let token = accessToken;
       if (customerId) {
-        requireCustomer(customerId);
-        const item = getLatestPlaidItemForCustomer(customerId);
+        await requireCustomer(customerId);
+        const item = await getLatestPlaidItemForCustomer(customerId);
         if (!item) {
           res.status(404).json({ error: "No Plaid item for this customer" });
           return;
@@ -221,9 +230,9 @@ export function plaidRouter(plaid: PlaidApi): Router {
   router.post("/linked-accounts", async (req, res, next) => {
     try {
       const { customerId, accountIds } = linkedAccountsBody.parse(req.body);
-      requireCustomer(customerId);
+      await requireCustomer(customerId);
 
-      const item = getLatestPlaidItemForCustomer(customerId);
+      const item = await getLatestPlaidItemForCustomer(customerId);
       if (!item) {
         res.status(404).json({ error: "No Plaid item for this customer" });
         return;
@@ -234,7 +243,7 @@ export function plaidRouter(plaid: PlaidApi): Router {
         item.access_token_plain,
         accountIds,
       );
-      saveLinkedBankAccounts({
+      await saveLinkedBankAccounts({
         customerId,
         plaidItemId: item.id,
         accounts: data.accounts,
@@ -245,13 +254,13 @@ export function plaidRouter(plaid: PlaidApi): Router {
         | { error: string } = { added: 0, modified: 0, removed: 0 };
 
       try {
-        const cursor = getTransactionsCursor(item.id);
+        const cursor = await getTransactionsCursor(item.id);
         const sync = await syncTransactions(
           plaid,
           item.access_token_plain,
           cursor,
         );
-        transactionSync = applyTransactionSync(
+        transactionSync = await applyTransactionSync(
           customerId,
           item.id,
           accountIds,
@@ -259,12 +268,14 @@ export function plaidRouter(plaid: PlaidApi): Router {
         );
       } catch (syncErr) {
         const message =
-          syncErr instanceof Error ? syncErr.message : "Transaction sync failed";
+          syncErr instanceof Error
+            ? syncErr.message
+            : "Transaction sync failed";
         transactionSync = { error: message };
       }
 
-      const profile = getCustomerProfile(customerId);
-      const transactions = getTransactionsForCustomer(customerId, {
+      const profile = await getCustomerProfile(customerId);
+      const transactions = await getTransactionsForCustomer(customerId, {
         limit: 100,
       });
 
@@ -284,8 +295,8 @@ export function plaidRouter(plaid: PlaidApi): Router {
     try {
       const { customerId, accountIds } = transactionSyncBody.parse(req.body);
 
-      requireCustomer(customerId);
-      const item = getLatestPlaidItemForCustomer(customerId);
+      await requireCustomer(customerId);
+      const item = await getLatestPlaidItemForCustomer(customerId);
       if (!item) {
         res.status(404).json({ error: "No Plaid item for this customer" });
         return;
@@ -293,11 +304,10 @@ export function plaidRouter(plaid: PlaidApi): Router {
 
       const linkedAccountIds =
         accountIds ??
-        (
-          getCustomerProfile(customerId)?.bankAccounts.map(
-            (a) => a.plaidAccountId,
-          ) ?? []
-        );
+        (await getCustomerProfile(customerId))?.bankAccounts.map(
+          (a) => a.plaidAccountId,
+        ) ??
+        [];
 
       if (!linkedAccountIds.length) {
         res.status(400).json({
@@ -306,13 +316,13 @@ export function plaidRouter(plaid: PlaidApi): Router {
         return;
       }
 
-      const cursor = getTransactionsCursor(item.id);
+      const cursor = await getTransactionsCursor(item.id);
       const sync = await syncTransactions(
         plaid,
         item.access_token_plain,
         cursor,
       );
-      const counts = applyTransactionSync(
+      const counts = await applyTransactionSync(
         customerId,
         item.id,
         linkedAccountIds,
@@ -322,8 +332,10 @@ export function plaidRouter(plaid: PlaidApi): Router {
       res.json({
         customerId,
         ...counts,
-        transactions: getTransactionsForCustomer(customerId, { limit: 100 }),
-        stored: getCustomerProfile(customerId),
+        transactions: await getTransactionsForCustomer(customerId, {
+          limit: 100,
+        }),
+        stored: await getCustomerProfile(customerId),
       });
     } catch (err) {
       next(err);
@@ -349,11 +361,14 @@ export function plaidRouter(plaid: PlaidApi): Router {
         : 500;
 
     try {
-      requireCustomer(parsed.data.customerId);
-      const transactions = getTransactionsForCustomer(parsed.data.customerId, {
-        bankAccountId,
-        limit,
-      });
+      await requireCustomer(parsed.data.customerId);
+      const transactions = await getTransactionsForCustomer(
+        parsed.data.customerId,
+        {
+          bankAccountId,
+          limit,
+        },
+      );
       res.json({ transactions });
     } catch (err) {
       next(err);

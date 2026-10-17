@@ -37,7 +37,7 @@ export default function PracticeLoginPage() {
 
   return (
     <AuthLayout
-      title="Practice portal"
+      title="Vet clinic login"
       lead="Log in to manage your referral link, QR code, and applications."
     >
       <form className="portal-form" onSubmit={handleSubmit}>
@@ -64,6 +64,9 @@ export default function PracticeLoginPage() {
 
       <p className="portal-footer-text">
         New partner? <Link to="/practice/signup">Create a practice account</Link>
+      </p>
+      <p className="portal-footer-text">
+        Pet owner? <Link to="/borrower/login">Go to client login</Link>
       </p>
     </AuthLayout>
   );

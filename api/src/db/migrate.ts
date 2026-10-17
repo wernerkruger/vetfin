@@ -1,256 +1,137 @@
-import type Database from "better-sqlite3";
+import { execute, getDb, query, withTransaction } from "./connection.js";
 
-function columnExists(
-  database: Database.Database,
-  table: string,
-  column: string,
-): boolean {
-  const cols = database
-    .prepare(`PRAGMA table_info(${table})`)
-    .all() as Array<{ name: string }>;
-  return cols.some((c) => c.name === column);
-}
+/**
+ * Schema changes after the initial Postgres schema (schema.sql).
+ *
+ * The old SQLite column-by-column migrations are no longer needed: schema.sql
+ * already describes the full current schema. Add future changes here as new
+ * entries with a unique id — each runs once, in order, inside a transaction.
+ *
+ * Example:
+ *   { id: "2026-10-10-add-loan-notes", sql: "ALTER TABLE loan_applications ADD COLUMN notes TEXT" },
+ */
+const migrations: Array<{ id: string; sql: string }> = [
+  {
+    // Repayment plan chosen by the borrower + Truth in Lending acceptance record.
+    id: "2026-10-03-repayment-plan-and-tila",
+    sql: `
+      ALTER TABLE loan_applications
+        ADD COLUMN IF NOT EXISTS amount_financed DOUBLE PRECISION,
+        ADD COLUMN IF NOT EXISTS origination_fee DOUBLE PRECISION,
+        ADD COLUMN IF NOT EXISTS final_payment DOUBLE PRECISION,
+        ADD COLUMN IF NOT EXISTS finance_charge DOUBLE PRECISION,
+        ADD COLUMN IF NOT EXISTS total_of_payments DOUBLE PRECISION,
+        ADD COLUMN IF NOT EXISTS apr DOUBLE PRECISION,
+        ADD COLUMN IF NOT EXISTS plan_selected_at TEXT,
+        ADD COLUMN IF NOT EXISTS first_payment_due_date TEXT,
+        ADD COLUMN IF NOT EXISTS tila_accepted_at TEXT,
+        ADD COLUMN IF NOT EXISTS tila_signature_name TEXT,
+        ADD COLUMN IF NOT EXISTS tila_esign_consent_at TEXT,
+        ADD COLUMN IF NOT EXISTS tila_ip_address TEXT,
+        ADD COLUMN IF NOT EXISTS tila_user_agent TEXT,
+        ADD COLUMN IF NOT EXISTS tila_disclosure_json TEXT
+    `,
+  },
+  {
+    // The 2% origination fee is paid up front; funding is blocked until it's recorded as paid.
+    id: "2026-10-03-origination-fee-paid",
+    sql: `
+      ALTER TABLE loan_applications
+        ADD COLUMN IF NOT EXISTS origination_fee_paid_at TEXT,
+        ADD COLUMN IF NOT EXISTS origination_fee_marked_paid_by TEXT
+    `,
+  },
+  {
+    // Loan servicing: per-loan payment schedule, payments received, contact notes,
+    // admin audit log, and cancel / write-off details.
+    id: "2026-10-03-loan-servicing",
+    sql: `
+      ALTER TABLE loan_applications
+        ADD COLUMN IF NOT EXISTS cancelled_at TEXT,
+        ADD COLUMN IF NOT EXISTS cancelled_by TEXT,
+        ADD COLUMN IF NOT EXISTS cancel_reason TEXT,
+        ADD COLUMN IF NOT EXISTS written_off_at TEXT,
+        ADD COLUMN IF NOT EXISTS written_off_by TEXT,
+        ADD COLUMN IF NOT EXISTS write_off_reason TEXT,
+        ADD COLUMN IF NOT EXISTS written_off_amount DOUBLE PRECISION,
+        ADD COLUMN IF NOT EXISTS paid_off_at TEXT;
 
-function tableExists(database: Database.Database, table: string): boolean {
-  const row = database
-    .prepare(
-      "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
-    )
-    .get(table) as { name: string } | undefined;
-  return Boolean(row);
-}
-
-export function runMigrations(database: Database.Database): void {
-  if (!tableExists(database, "vet_practices")) {
-    database.exec(`
-      CREATE TABLE vet_practices (
+      CREATE TABLE IF NOT EXISTS loan_installments (
         id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        slug TEXT NOT NULL UNIQUE,
-        email TEXT NOT NULL UNIQUE,
-        password_hash TEXT NOT NULL,
-        failed_login_attempts INTEGER NOT NULL DEFAULT 0,
-        locked_at TEXT,
-        must_change_password INTEGER NOT NULL DEFAULT 0,
-        contact_name TEXT,
-        phone TEXT,
-        address_line1 TEXT,
-        city TEXT,
-        state TEXT,
-        zip TEXT,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        loan_application_id TEXT NOT NULL REFERENCES loan_applications(id) ON DELETE CASCADE,
+        number INTEGER NOT NULL,
+        due_date TEXT NOT NULL,
+        original_due_date TEXT NOT NULL,
+        amount_due DOUBLE PRECISION NOT NULL,
+        principal DOUBLE PRECISION NOT NULL,
+        interest DOUBLE PRECISION NOT NULL,
+        amount_paid DOUBLE PRECISION NOT NULL DEFAULT 0,
+        -- scheduled | partial | paid | closed_early | written_off
+        status TEXT NOT NULL DEFAULT 'scheduled',
+        paid_at TEXT,
+        created_at TEXT NOT NULL DEFAULT now_text(),
+        updated_at TEXT NOT NULL DEFAULT now_text(),
+        UNIQUE (loan_application_id, number)
       );
-      CREATE INDEX IF NOT EXISTS idx_vet_practices_slug ON vet_practices(slug);
-    `);
-  }
+      CREATE INDEX IF NOT EXISTS idx_loan_installments_due ON loan_installments(due_date);
 
-  if (!columnExists(database, "plaid_items", "transactions_cursor")) {
-    database.exec(
-      "ALTER TABLE plaid_items ADD COLUMN transactions_cursor TEXT",
-    );
-  }
-
-  for (const [col, def] of [
-    ["applicant_name", "TEXT"],
-    ["practice_id", "TEXT"],
-    ["referral_slug", "TEXT"],
-    ["password_hash", "TEXT"],
-    ["first_name", "TEXT"],
-    ["last_name", "TEXT"],
-    ["phone", "TEXT"],
-    ["date_of_birth", "TEXT"],
-    ["ssn_last4", "TEXT"],
-    ["address_line1", "TEXT"],
-    ["address_line2", "TEXT"],
-    ["city", "TEXT"],
-    ["state", "TEXT"],
-    ["zip", "TEXT"],
-  ] as const) {
-    if (!columnExists(database, "customers", col)) {
-      database.exec(`ALTER TABLE customers ADD COLUMN ${col} ${def}`);
-    }
-  }
-
-  if (!columnExists(database, "customers", "application_status")) {
-    database.exec(
-      "ALTER TABLE customers ADD COLUMN application_status TEXT NOT NULL DEFAULT 'draft'",
-    );
-  }
-
-  if (!tableExists(database, "loan_applications")) {
-    database.exec(`
-      CREATE TABLE loan_applications (
+      CREATE TABLE IF NOT EXISTS loan_payments (
         id TEXT PRIMARY KEY,
-        customer_id TEXT NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
-        practice_id TEXT NOT NULL REFERENCES vet_practices(id),
-        referral_slug TEXT NOT NULL,
-        status TEXT NOT NULL DEFAULT 'draft',
-        loan_amount REAL,
-        service_type TEXT,
-        animal_type TEXT,
-        animal_name TEXT,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        loan_application_id TEXT NOT NULL REFERENCES loan_applications(id) ON DELETE CASCADE,
+        amount DOUBLE PRECISION NOT NULL,
+        received_on TEXT NOT NULL,
+        method TEXT NOT NULL,
+        reference TEXT,
+        -- regular | payoff
+        kind TEXT NOT NULL DEFAULT 'regular',
+        recorded_by TEXT NOT NULL,
+        voided_at TEXT,
+        voided_by TEXT,
+        void_reason TEXT,
+        created_at TEXT NOT NULL DEFAULT now_text()
       );
-      CREATE INDEX IF NOT EXISTS idx_loan_applications_customer ON loan_applications(customer_id);
-      CREATE INDEX IF NOT EXISTS idx_loan_applications_practice ON loan_applications(practice_id);
-    `);
-  }
+      CREATE INDEX IF NOT EXISTS idx_loan_payments_loan ON loan_payments(loan_application_id);
 
-  for (const [col, def] of [
-    ["amount_repaid", "REAL NOT NULL DEFAULT 0"],
-    ["monthly_payment", "REAL"],
-    ["term_months", "INTEGER"],
-    ["term_months_remaining", "INTEGER"],
-    ["interest_rate", "REAL"],
-    ["approved_at", "TEXT"],
-    ["vet_approved", "INTEGER"],
-    ["vet_reviewed_at", "TEXT"],
-  ] as const) {
-    if (!columnExists(database, "loan_applications", col)) {
-      database.exec(`ALTER TABLE loan_applications ADD COLUMN ${col} ${def}`);
-    }
-  }
-
-  if (columnExists(database, "customers", "practice_id")) {
-    database.exec(
-      "CREATE INDEX IF NOT EXISTS idx_customers_practice ON customers(practice_id)",
-    );
-  }
-
-  if (!columnExists(database, "bank_accounts", "customer_id")) {
-    database.exec(
-      "ALTER TABLE bank_accounts ADD COLUMN customer_id TEXT REFERENCES customers(id)",
-    );
-    database.exec(`
-      UPDATE bank_accounts
-      SET customer_id = (
-        SELECT pi.customer_id FROM plaid_items pi
-        WHERE pi.id = bank_accounts.plaid_item_id
-      )
-      WHERE customer_id IS NULL
-    `);
-  }
-
-  if (!columnExists(database, "bank_accounts", "loan_application_id")) {
-    database.exec(
-      "ALTER TABLE bank_accounts ADD COLUMN loan_application_id TEXT REFERENCES loan_applications(id)",
-    );
-  }
-
-  if (!columnExists(database, "bank_transactions", "customer_id")) {
-    database.exec(
-      "ALTER TABLE bank_transactions ADD COLUMN customer_id TEXT REFERENCES customers(id)",
-    );
-    database.exec(`
-      UPDATE bank_transactions
-      SET customer_id = (
-        SELECT ba.customer_id FROM bank_accounts ba
-        WHERE ba.id = bank_transactions.bank_account_id
-      )
-      WHERE customer_id IS NULL
-    `);
-    database.exec(`
-      UPDATE bank_transactions
-      SET customer_id = (
-        SELECT pi.customer_id FROM bank_accounts ba
-        INNER JOIN plaid_items pi ON pi.id = ba.plaid_item_id
-        WHERE ba.id = bank_transactions.bank_account_id
-      )
-      WHERE customer_id IS NULL
-    `);
-  }
-
-  database.exec(
-    "CREATE INDEX IF NOT EXISTS idx_bank_accounts_customer ON bank_accounts(customer_id)",
-  );
-  database.exec(
-    "CREATE INDEX IF NOT EXISTS idx_bank_accounts_loan_application ON bank_accounts(loan_application_id)",
-  );
-  if (!columnExists(database, "bank_transactions", "loan_application_id")) {
-    database.exec(
-      "ALTER TABLE bank_transactions ADD COLUMN loan_application_id TEXT REFERENCES loan_applications(id)",
-    );
-    database.exec(`
-      UPDATE bank_transactions
-      SET loan_application_id = (
-        SELECT ba.loan_application_id FROM bank_accounts ba
-        WHERE ba.id = bank_transactions.bank_account_id
-      )
-      WHERE loan_application_id IS NULL
-    `);
-  }
-
-  database.exec(
-    "CREATE INDEX IF NOT EXISTS idx_bank_transactions_customer ON bank_transactions(customer_id)",
-  );
-  database.exec(
-    "CREATE INDEX IF NOT EXISTS idx_bank_transactions_loan_application ON bank_transactions(loan_application_id)",
-  );
-
-  for (const table of ["customers", "vet_practices"] as const) {
-    if (!columnExists(database, table, "failed_login_attempts")) {
-      database.exec(
-        `ALTER TABLE ${table} ADD COLUMN failed_login_attempts INTEGER NOT NULL DEFAULT 0`,
-      );
-    }
-    if (!columnExists(database, table, "locked_at")) {
-      database.exec(`ALTER TABLE ${table} ADD COLUMN locked_at TEXT`);
-    }
-    if (!columnExists(database, table, "must_change_password")) {
-      database.exec(
-        `ALTER TABLE ${table} ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0`,
-      );
-    }
-  }
-
-  if (!columnExists(database, "loan_applications", "disbursement_status")) {
-    database.exec(
-      "ALTER TABLE loan_applications ADD COLUMN disbursement_status TEXT",
-    );
-  }
-  if (!columnExists(database, "loan_applications", "disbursed_at")) {
-    database.exec("ALTER TABLE loan_applications ADD COLUMN disbursed_at TEXT");
-  }
-
-  database.exec(`
-    UPDATE loan_applications
-    SET disbursement_status = 'pending'
-    WHERE status = 'approved'
-      AND disbursement_status IS NULL
-  `);
-
-  if (!tableExists(database, "prospect_clinics")) {
-    database.exec(`
-      CREATE TABLE prospect_clinics (
+      CREATE TABLE IF NOT EXISTS loan_notes (
         id TEXT PRIMARY KEY,
-        category TEXT,
-        name TEXT NOT NULL,
-        address TEXT,
-        city TEXT,
-        state TEXT,
-        state_short TEXT,
-        phone TEXT,
-        website TEXT,
-        rating REAL,
-        source_url TEXT,
-        email TEXT,
-        signed_up INTEGER NOT NULL DEFAULT 0,
-        practice_id TEXT,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        loan_application_id TEXT NOT NULL REFERENCES loan_applications(id) ON DELETE CASCADE,
+        body TEXT NOT NULL,
+        -- phone | email | sms | in_person | other | null (internal note)
+        contact_method TEXT,
+        author TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT now_text()
       );
-      CREATE INDEX IF NOT EXISTS idx_prospect_clinics_name ON prospect_clinics(name);
-      CREATE INDEX IF NOT EXISTS idx_prospect_clinics_signed_up ON prospect_clinics(signed_up);
-      CREATE INDEX IF NOT EXISTS idx_prospect_clinics_city ON prospect_clinics(city);
-      CREATE INDEX IF NOT EXISTS idx_prospect_clinics_state_short ON prospect_clinics(state_short);
-    `);
-  }
+      CREATE INDEX IF NOT EXISTS idx_loan_notes_loan ON loan_notes(loan_application_id);
 
-  if (!columnExists(database, "vet_practices", "prospect_clinic_id")) {
-    database.exec(
-      "ALTER TABLE vet_practices ADD COLUMN prospect_clinic_id TEXT",
-    );
+      CREATE TABLE IF NOT EXISTS admin_audit_log (
+        id TEXT PRIMARY KEY,
+        loan_application_id TEXT REFERENCES loan_applications(id) ON DELETE CASCADE,
+        action TEXT NOT NULL,
+        reason TEXT,
+        details_json TEXT NOT NULL DEFAULT '{}',
+        actor TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT now_text()
+      );
+      CREATE INDEX IF NOT EXISTS idx_admin_audit_log_loan ON admin_audit_log(loan_application_id);
+    `,
+  },
+];
+
+export async function runMigrations(): Promise<void> {
+  const applied = new Set(
+    (await query<{ id: string }>("SELECT id FROM schema_migrations")).map(
+      (r) => r.id,
+    ),
+  );
+  for (const migration of migrations) {
+    if (applied.has(migration.id)) continue;
+    await withTransaction(async () => {
+      // exec = simple query protocol, so one migration can hold several statements.
+      await getDb().exec(migration.sql);
+      await execute("INSERT INTO schema_migrations (id) VALUES (?)", [
+        migration.id,
+      ]);
+    });
+    console.log(`Applied migration ${migration.id}`);
   }
 }

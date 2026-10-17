@@ -38,6 +38,11 @@ if [[ -z "${JWT_SECRET:-}" ]] || [[ "$JWT_SECRET" == "dev-only-change-me-vetfin-
   exit 1
 fi
 
+if [[ -z "${DB_PASSWORD:-}" ]] || [[ "$DB_PASSWORD" == "vetfin" ]] || [[ "$DB_PASSWORD" == CHANGE_ME* ]]; then
+  red "Set a strong DB_PASSWORD in api/.env (used to create the Postgres database)"
+  exit 1
+fi
+
 if [[ -z "${PLAID_CLIENT_ID:-}" ]] || [[ -z "${PLAID_SECRET:-}" ]]; then
   red "Set PLAID_CLIENT_ID and PLAID_SECRET in api/.env"
   exit 1

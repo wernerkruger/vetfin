@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import logoLockup from "../assets/logo-lockup.png";
 import "./Header.css";
@@ -12,6 +12,32 @@ const navLinks = [
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [loginOpen, setLoginOpen] = useState(false);
+  const loginRef = useRef<HTMLDivElement>(null);
+
+  // Close the login menu on outside click or Escape
+  useEffect(() => {
+    if (!loginOpen) return;
+    function onPointerDown(e: PointerEvent) {
+      if (loginRef.current && !loginRef.current.contains(e.target as Node)) {
+        setLoginOpen(false);
+      }
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setLoginOpen(false);
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [loginOpen]);
+
+  function closeAll() {
+    setLoginOpen(false);
+    setMenuOpen(false);
+  }
 
   return (
     <header className="header">
@@ -47,12 +73,48 @@ export default function Header() {
               </li>
             ))}
           </ul>
-          <Link to="/borrower/login" className="nav-dev">
-            My account
-          </Link>
-          <Link to="/practice/signup" className="nav-dev">
-            For clinics
-          </Link>
+
+          <div className="login-menu" ref={loginRef}>
+            <button
+              type="button"
+              className="btn btn--secondary login-toggle"
+              aria-haspopup="true"
+              aria-expanded={loginOpen}
+              aria-controls="login-options"
+              onClick={() => setLoginOpen((o) => !o)}
+            >
+              LOG IN
+              <span className="login-caret" aria-hidden="true">
+                ▾
+              </span>
+            </button>
+
+            {loginOpen ? (
+              <div id="login-options" className="login-options">
+                <Link
+                  to="/borrower/login"
+                  className="login-option"
+                  onClick={closeAll}
+                >
+                  <span className="login-option-title">Client login</span>
+                  <span className="login-option-desc">
+                    Pet owners — view your loan and repayments
+                  </span>
+                </Link>
+                <Link
+                  to="/practice/login"
+                  className="login-option"
+                  onClick={closeAll}
+                >
+                  <span className="login-option-title">Vet clinic login</span>
+                  <span className="login-option-desc">
+                    Practices — referrals, QR code and applications
+                  </span>
+                </Link>
+              </div>
+            ) : null}
+          </div>
+
           <Link to="/practice/signup" className="btn btn--primary nav-cta">
             SIGN UP MY VET PRACTICE
           </Link>

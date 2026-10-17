@@ -1,16 +1,23 @@
 export class ApiError extends Error {
   readonly fieldErrors: Record<string, string>;
+  /** HTTP status code, when known. */
+  readonly status?: number;
 
-  constructor(message: string, fieldErrors: Record<string, string> = {}) {
+  constructor(
+    message: string,
+    fieldErrors: Record<string, string> = {},
+    status?: number,
+  ) {
     super(message);
     this.name = "ApiError";
     this.fieldErrors = fieldErrors;
+    this.status = status;
   }
 }
 
 export function parseApiErrorPayload(data: unknown, status: number): ApiError {
   if (!data || typeof data !== "object") {
-    return new ApiError(`Request failed (${status})`);
+    return new ApiError(`Request failed (${status})`, {}, status);
   }
 
   const body = data as {
@@ -41,5 +48,5 @@ export function parseApiErrorPayload(data: unknown, status: number): ApiError {
       : Object.values(fieldErrors)[0] ??
         (typeof body.error === "string" ? body.error : `Request failed (${status})`);
 
-  return new ApiError(message, fieldErrors);
+  return new ApiError(message, fieldErrors, status);
 }

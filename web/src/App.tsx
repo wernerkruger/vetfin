@@ -12,12 +12,16 @@ import AdminDisbursementsPage from "./pages/AdminDisbursementsPage";
 import AdminNewLoansPage from "./pages/AdminNewLoansPage";
 import AdminProspectClinicsPage from "./pages/AdminProspectClinicsPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
+import AdminLoanDetailPage from "./pages/AdminLoanDetailPage";
+import AdminLoansPage from "./pages/AdminLoansPage";
 import ApplyPage from "./pages/ApplyPage";
 import BorrowerApplyPage from "./pages/BorrowerApplyPage";
 import BorrowerChangePasswordPage from "./pages/BorrowerChangePasswordPage";
 import BorrowerDashboardPage from "./pages/BorrowerDashboardPage";
+import BorrowerDisclosurePage from "./pages/BorrowerDisclosurePage";
 import BorrowerLoginPage from "./pages/BorrowerLoginPage";
 import LandingPage from "./pages/LandingPage";
+import LoginChooserPage from "./pages/LoginChooserPage";
 import PlaidTestPage from "./pages/PlaidTestPage";
 import PracticeChangePasswordPage from "./pages/PracticeChangePasswordPage";
 import PracticeDashboardPage from "./pages/PracticeDashboardPage";
@@ -35,6 +39,7 @@ export default function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/plaid-test" element={<PlaidTestPage />} />
               <Route path="/apply/:slug" element={<ApplyPage />} />
+              <Route path="/login" element={<LoginChooserPage />} />
               <Route path="/borrower/login" element={<BorrowerLoginPage />} />
               <Route path="/admin/login" element={<AdminLoginPage />} />
               <Route path="/practice/signup" element={<PracticeSignupPage />} />
@@ -49,6 +54,8 @@ export default function App() {
                   path="/admin/disbursements"
                   element={<AdminDisbursementsPage />}
                 />
+                <Route path="/admin/loans" element={<AdminLoansPage />} />
+                <Route path="/admin/loans/:loanId" element={<AdminLoanDetailPage />} />
                 <Route path="/admin/new-loans" element={<AdminNewLoansPage />} />
                 <Route path="/admin/bi" element={<AdminBiPage />} />
                 <Route
@@ -76,6 +83,10 @@ export default function App() {
                   element={<BorrowerDashboardPage />}
                 />
                 <Route path="/borrower/apply" element={<BorrowerApplyPage />} />
+                <Route
+                  path="/borrower/loans/:applicationId/disclosure"
+                  element={<BorrowerDisclosurePage />}
+                />
                 <Route
                   path="/borrower/change-password"
                   element={<BorrowerChangePasswordPage />}

@@ -15,19 +15,19 @@ const createBody = z.object({
 export function customersRouter(): Router {
   const router = Router();
 
-  router.post("/", (req, res, next) => {
+  router.post("/", async (req, res, next) => {
     try {
       const body = createBody.parse(req.body);
-      const customer = upsertCustomer(body);
+      const customer = await upsertCustomer(body);
       res.status(201).json({ customer: toPublicCustomer(customer) });
     } catch (err) {
       next(err);
     }
   });
 
-  router.get("/:customerId", (req, res, next) => {
+  router.get("/:customerId", async (req, res, next) => {
     try {
-      const profile = getCustomerProfile(req.params.customerId);
+      const profile = await getCustomerProfile(req.params.customerId);
       if (!profile) {
         res.status(404).json({ error: "Customer not found" });
         return;
@@ -41,8 +41,8 @@ export function customersRouter(): Router {
   return router;
 }
 
-export function requireCustomer(customerId: string) {
-  const customer = getCustomerById(customerId);
+export async function requireCustomer(customerId: string) {
+  const customer = await getCustomerById(customerId);
   if (!customer) {
     const error = new Error("Customer not found");
     (error as Error & { status: number }).status = 404;

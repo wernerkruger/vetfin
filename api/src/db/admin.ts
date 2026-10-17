@@ -17,21 +17,21 @@ export type AdminUserSummary = {
   createdAt: string;
 };
 
-export function listAdminUsers(): {
+export async function listAdminUsers(): Promise<{
   practices: AdminUserSummary[];
   borrowers: AdminUserSummary[];
-} {
+}> {
   const database = getDb();
 
-  const borrowers = database
+  const borrowers = (await database
     .prepare(
       `SELECT id, email, applicant_name, first_name, last_name, password_hash,
               locked_at, must_change_password, failed_login_attempts, created_at
        FROM customers
        WHERE email IS NOT NULL
-       ORDER BY email COLLATE NOCASE`,
+       ORDER BY LOWER(email)`,
     )
-    .all() as Array<{
+    .all()) as Array<{
     id: string;
     email: string;
     applicant_name: string | null;
@@ -44,14 +44,14 @@ export function listAdminUsers(): {
     created_at: string;
   }>;
 
-  const practices = database
+  const practices = (await database
     .prepare(
       `SELECT id, email, name, locked_at, must_change_password,
               failed_login_attempts, created_at
        FROM vet_practices
-       ORDER BY email COLLATE NOCASE`,
+       ORDER BY LOWER(email)`,
     )
-    .all() as Array<{
+    .all()) as Array<{
     id: string;
     email: string;
     name: string;
@@ -91,15 +91,15 @@ export function listAdminUsers(): {
   return { practices: practiceUsers, borrowers: borrowerUsers };
 }
 
-export function getAdminBorrowerDetail(customerId: string) {
-  const borrower = getBorrowerById(customerId);
+export async function getAdminBorrowerDetail(customerId: string) {
+  const borrower = await getBorrowerById(customerId);
   if (!borrower) {
     throw new HttpError(404, "Borrower not found");
   }
 
   return {
     borrower: toPublicBorrower(borrower),
-    applications: listApplicationsForAdmin(customerId),
+    applications: await listApplicationsForAdmin(customerId),
   };
 }
 
@@ -109,9 +109,9 @@ export async function adminResetUserPassword(
 ): Promise<{ temporaryPassword: string }> {
   const table = type === "borrower" ? "customers" : "vet_practices";
   const database = getDb();
-  const row = database
+  const row = (await database
     .prepare(`SELECT id FROM ${table} WHERE id = ?`)
-    .get(id) as { id: string } | undefined;
+    .get(id)) as { id: string } | undefined;
 
   if (!row) {
     throw new HttpError(404, "User not found");
@@ -120,12 +120,12 @@ export async function adminResetUserPassword(
   const temporaryPassword = generateTemporaryPassword();
   const passwordHash = await hashPassword(temporaryPassword);
 
-  database
+  await database
     .prepare(
       `UPDATE ${table} SET
         password_hash = ?, must_change_password = 1,
         failed_login_attempts = 0, locked_at = NULL,
-        updated_at = datetime('now')
+        updated_at = now_text()
        WHERE id = ?`,
     )
     .run(passwordHash, id);
@@ -133,17 +133,17 @@ export async function adminResetUserPassword(
   return { temporaryPassword };
 }
 
-export function adminUnlockUser(
+export async function adminUnlockUser(
   type: "borrower" | "practice",
   id: string,
-): void {
+): Promise<void> {
   const table = type === "borrower" ? "customers" : "vet_practices";
   const database = getDb();
-  const result = database
+  const result = await database
     .prepare(
       `UPDATE ${table} SET
         failed_login_attempts = 0, locked_at = NULL,
-        updated_at = datetime('now')
+        updated_at = now_text()
        WHERE id = ?`,
     )
     .run(id);

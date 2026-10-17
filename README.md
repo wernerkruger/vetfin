@@ -5,12 +5,26 @@ Veterinary bill financing for pet owners and partner clinics. Monorepo:
 | Directory | Stack | Role |
 |-----------|--------|------|
 | `web/` | React + Vite | Marketing site, apply flow, borrower & practice portals |
-| `api/` | Node + Express + SQLite | Auth, loan applications, Plaid |
+| `api/` | Node + Express + PostgreSQL | Auth, loan applications, Plaid |
 | `Analysis/` | Python | Clinic data enrichment (optional) |
 
 ## Local development
 
 Keep **local** and **AWS** env files separate. Local uses `APP_ENV=development` and localhost URLs; the EC2 box uses `APP_ENV=production` and your public host (see [Environment: local vs production](#environment-local-vs-production)).
+
+**Database** (Postgres in Docker, from the repo root)
+
+```bash
+docker compose up -d db        # postgres://vetfin:vetfin@localhost:5432/vetfin
+```
+
+The API connects using `DATABASE_URL` (or `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASSWORD`) in `api/.env`. Tables are created automatically on startup.
+
+Moving over from the old SQLite file? Copy it in once:
+
+```bash
+cd api && npm run db:migrate-from-sqlite          # reads ./data/vetfin.sqlite
+```
 
 **API**
 
@@ -52,20 +66,20 @@ cp deploy/aws/.env.production.example api/.env && nano api/.env
 
 4. Optional: enable auto-start on reboot with `deploy/aws/vetfin.service`.
 
-Everything (web, API, SQLite, optional HTTPS) runs on that one instance via Docker Compose.
+Everything (web, API, Postgres, optional HTTPS) runs on that one instance via Docker Compose.
 
 Test the same stack locally before deploying:
 
 ```bash
 cp api/.env.example api/.env   # set DATA_ENCRYPTION_KEY + JWT_SECRET
-docker compose up --build      # http://localhost
+docker compose --env-file api/.env up --build      # http://localhost
 ```
 
 ---
 
 ## Production architecture
 
-The app is packaged as **two Docker containers** on one host:
+The app is packaged as **three Docker containers** on one host:
 
 ```
                     ┌─────────────────────────────────────┐
@@ -76,12 +90,15 @@ The app is packaged as **two Docker containers** on one host:
                     │  proxies /api → api                 │
                     └──────────────┬──────────────────────┘
                     ┌──────────────▼──────────────────────┐
-                    │  api (Node) — SQLite on volume      │
+                    │  api (Node)                         │
+                    └──────────────┬──────────────────────┘
+                    ┌──────────────▼──────────────────────┐
+                    │  db (Postgres 16) — data on volume  │
                     └─────────────────────────────────────┘
 ```
 
 - **Single domain** — nginx serves the SPA and forwards `/api/*` to the API.
-- **SQLite** — Docker volume `vetfin-data` on the EC2 instance.
+- **Postgres** — `db` container, data in Docker volume `vetfin-pg`. Only reachable from the host itself (127.0.0.1).
 - **Secrets** — `api/.env` on the server (never commit).
 
 ---
@@ -114,7 +131,10 @@ The app is packaged as **two Docker containers** on one host:
 | `DATA_ENCRYPTION_KEY` | API | Encrypts Plaid tokens at rest (≥16 chars; **required** when `NODE_ENV=production`) |
 | `PUBLIC_APP_URL` | API | Referral links & QR codes |
 | `CORS_ORIGINS` | API | Comma-separated allowed browser origins |
-| `DATABASE_PATH` | API | SQLite path (`/data/vetfin.sqlite` in Docker) |
+| `DATABASE_URL` | API | Postgres connection string, e.g. `postgres://vetfin:vetfin@localhost:5432/vetfin` (used outside Docker) |
+| `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASSWORD` | API + Compose | Connection parts, used when `DATABASE_URL` is empty. Compose also uses `DB_NAME`/`DB_USER`/`DB_PASSWORD` to create the database |
+| `DB_SSL` | API | `disable` (default), `require` or `verify-full` — use TLS for managed databases like RDS |
+| `DB_POOL_MAX` | API | Max connections in the pool (default 10) |
 | `VITE_API_URL` | Web build | API base URL; leave empty for same-origin `/api` in Docker/AWS |
 
 `NODE_ENV=production` safety checks:
@@ -133,7 +153,8 @@ The app is packaged as **two Docker containers** on one host:
 - [ ] Plaid production keys and `PLAID_ENV=production` when ready
 - [ ] HTTPS enabled (Caddy, ALB + ACM, or CloudFront)
 - [ ] Security group restricts SSH to your IP
-- [ ] Back up the SQLite Docker volume regularly (see `deploy/aws/README.md`)
+- [ ] Strong `DB_PASSWORD` set before the first deploy
+- [ ] Back up the Postgres database regularly (see `deploy/aws/README.md`)
 
 ## Project scripts
 

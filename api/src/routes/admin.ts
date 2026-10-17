@@ -3,11 +3,23 @@ import { z } from "zod";
 import { signAdminToken } from "../auth/jwt.js";
 import { getConfig } from "../config.js";
 import { verifyPassword } from "../crypto/password.js";
-import { adminResetUserPassword, adminUnlockUser, getAdminBorrowerDetail, listAdminUsers } from "../db/admin.js";
+import {
+  adminResetUserPassword,
+  adminUnlockUser,
+  getAdminBorrowerDetail,
+  listAdminUsers,
+} from "../db/admin.js";
 import { getAdminBiAnalytics } from "../db/bi.js";
-import { listAdminProspectClinics, exportAdminProspectClinics, type ProspectClinicFilters } from "../db/prospectClinics.js";
+import { getAcceptedTilaDisclosure } from "../db/repayment.js";
+import { audit } from "../db/loanServicing.js";
+import {
+  listAdminProspectClinics,
+  exportAdminProspectClinics,
+  type ProspectClinicFilters,
+} from "../db/prospectClinics.js";
 import {
   adminApproveApplication,
+  adminMarkOriginationFeePaid,
   adminDeclineApplication,
   adminMarkDisbursementSent,
   countAdminPendingDisbursements,
@@ -47,8 +59,7 @@ function prospectClinicFiltersFromQuery(
     signedUpRaw === "yes" || signedUpRaw === "no" ? signedUpRaw : "all";
 
   return {
-    category:
-      typeof query.category === "string" ? query.category : undefined,
+    category: typeof query.category === "string" ? query.category : undefined,
     name: typeof query.name === "string" ? query.name : undefined,
     address: typeof query.address === "string" ? query.address : undefined,
     city: typeof query.city === "string" ? query.city : undefined,
@@ -99,40 +110,100 @@ export function adminRouter(): Router {
     res.json({ username: auth.username });
   });
 
-  router.get("/users", requireAdminAuth, (_req, res) => {
-    const { practices, borrowers } = listAdminUsers();
+  router.get("/users", requireAdminAuth, async (_req, res) => {
+    const { practices, borrowers } = await listAdminUsers();
     res.json({ practices, borrowers });
   });
 
-  router.get("/borrowers/:id", requireAdminAuth, (req, res, next) => {
+  router.get("/borrowers/:id", requireAdminAuth, async (req, res, next) => {
     try {
       const { id } = idParam.parse(req.params);
-      res.json(getAdminBorrowerDetail(id));
+      res.json(await getAdminBorrowerDetail(id));
     } catch (err) {
       next(err);
     }
   });
 
-  router.get("/applications/pending-funding", requireAdminAuth, (_req, res) => {
-    const applications = listAdminPendingFundingApplications();
-    res.json({
-      applications,
-      count: applications.length,
-    });
-  });
+  router.get(
+    "/applications/pending-funding",
+    requireAdminAuth,
+    async (_req, res) => {
+      const applications = await listAdminPendingFundingApplications();
+      res.json({
+        applications,
+        count: applications.length,
+      });
+    },
+  );
 
-  router.get("/applications/pending-funding/count", requireAdminAuth, (_req, res) => {
-    res.json({ count: countAdminPendingFundingApplications() });
-  });
+  router.get(
+    "/applications/pending-funding/count",
+    requireAdminAuth,
+    async (_req, res) => {
+      res.json({ count: await countAdminPendingFundingApplications() });
+    },
+  );
+
+  router.get(
+    "/applications/:applicationId/disclosure",
+    requireAdminAuth,
+    async (req, res, next) => {
+      try {
+        const { applicationId } = applicationIdParam.parse(req.params);
+        const disclosure = await getAcceptedTilaDisclosure(applicationId);
+        if (!disclosure) {
+          res
+            .status(404)
+            .json({ error: "No accepted disclosure for this application" });
+          return;
+        }
+        res.json({ disclosure });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  router.post(
+    "/applications/:applicationId/origination-fee/paid",
+    requireAdminAuth,
+    async (req, res, next) => {
+      try {
+        const { applicationId } = applicationIdParam.parse(req.params);
+        const application = await adminMarkOriginationFeePaid(
+          applicationId,
+          getAdminAuth(req).username,
+        );
+        await audit(
+          applicationId,
+          "fee.marked_paid",
+          getAdminAuth(req).username,
+          {
+            details: { amount: application.origination_fee },
+          },
+        );
+        const practice = await getPracticeById(application.practice_id);
+        res.json({
+          application: toPublicApplication(
+            application,
+            practice ? { name: practice.name } : undefined,
+          ),
+        });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
 
   router.post(
     "/applications/:applicationId/approve",
     requireAdminAuth,
-    (req, res, next) => {
+    async (req, res, next) => {
       try {
         const { applicationId } = applicationIdParam.parse(req.params);
-        const application = adminApproveApplication(applicationId);
-        const practice = getPracticeById(application.practice_id);
+        const application = await adminApproveApplication(applicationId);
+        await audit(applicationId, "loan.approved", getAdminAuth(req).username);
+        const practice = await getPracticeById(application.practice_id);
         res.json({
           application: toPublicApplication(
             application,
@@ -148,11 +219,12 @@ export function adminRouter(): Router {
   router.post(
     "/applications/:applicationId/decline",
     requireAdminAuth,
-    (req, res, next) => {
+    async (req, res, next) => {
       try {
         const { applicationId } = applicationIdParam.parse(req.params);
-        const application = adminDeclineApplication(applicationId);
-        const practice = getPracticeById(application.practice_id);
+        const application = await adminDeclineApplication(applicationId);
+        await audit(applicationId, "loan.declined", getAdminAuth(req).username);
+        const practice = await getPracticeById(application.practice_id);
         res.json({
           application: toPublicApplication(
             application,
@@ -165,46 +237,67 @@ export function adminRouter(): Router {
     },
   );
 
-  router.get("/disbursements/pending-count", requireAdminAuth, (_req, res) => {
-    res.json({ count: countAdminPendingDisbursements() });
+  router.get(
+    "/disbursements/pending-count",
+    requireAdminAuth,
+    async (_req, res) => {
+      res.json({ count: await countAdminPendingDisbursements() });
+    },
+  );
+
+  router.get("/disbursements", requireAdminAuth, async (_req, res) => {
+    res.json({ disbursements: await listAdminDisbursements() });
   });
 
-  router.get("/disbursements", requireAdminAuth, (_req, res) => {
-    res.json({ disbursements: listAdminDisbursements() });
+  router.get("/bi", requireAdminAuth, async (_req, res) => {
+    res.json(await getAdminBiAnalytics());
   });
 
-  router.get("/bi", requireAdminAuth, (_req, res) => {
-    res.json(getAdminBiAnalytics());
-  });
-
-  router.get("/prospect-clinics", requireAdminAuth, (req, res, next) => {
+  router.get("/prospect-clinics", requireAdminAuth, async (req, res, next) => {
     try {
-      res.json(listAdminProspectClinics(prospectClinicFiltersFromQuery(req.query)));
+      res.json(
+        await listAdminProspectClinics(
+          prospectClinicFiltersFromQuery(req.query),
+        ),
+      );
     } catch (err) {
       next(err);
     }
   });
 
-  router.get("/prospect-clinics/export", requireAdminAuth, (req, res, next) => {
-    try {
-      const { page: _page, limit: _limit, ...filters } =
-        prospectClinicFiltersFromQuery(req.query);
-      res.json(exportAdminProspectClinics(filters));
-    } catch (err) {
-      next(err);
-    }
-  });
+  router.get(
+    "/prospect-clinics/export",
+    requireAdminAuth,
+    async (req, res, next) => {
+      try {
+        const {
+          page: _page,
+          limit: _limit,
+          ...filters
+        } = prospectClinicFiltersFromQuery(req.query);
+        res.json(await exportAdminProspectClinics(filters));
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
 
   router.post(
     "/disbursements/:applicationId/mark-sent",
     requireAdminAuth,
-    (req, res, next) => {
+    async (req, res, next) => {
       try {
         const { applicationId } = applicationIdParam.parse(req.params);
-        const application = adminMarkDisbursementSent(applicationId);
-        const practice = getPracticeById(application.practice_id);
+        const application = await adminMarkDisbursementSent(applicationId);
+        await audit(applicationId, "loan.funded", getAdminAuth(req).username, {
+          details: {
+            amount: application.loan_amount,
+            firstPaymentDue: application.first_payment_due_date,
+          },
+        });
+        const practice = await getPracticeById(application.practice_id);
         res.json({
-          disbursement: listAdminDisbursements().find(
+          disbursement: (await listAdminDisbursements()).find(
             (d) => d.applicationId === applicationId,
           ),
           application: toPublicApplication(
@@ -221,10 +314,10 @@ export function adminRouter(): Router {
   router.post(
     "/users/:type/:id/unlock",
     requireAdminAuth,
-    (req, res, next) => {
+    async (req, res, next) => {
       try {
         const params = resetParams.parse(req.params);
-        adminUnlockUser(params.type, params.id);
+        await adminUnlockUser(params.type, params.id);
         res.json({ message: "Account unlocked." });
       } catch (err) {
         next(err);

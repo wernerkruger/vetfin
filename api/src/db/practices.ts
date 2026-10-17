@@ -16,7 +16,7 @@ import { hashPassword, verifyPassword } from "../crypto/password.js";
 import { HttpError } from "../errors.js";
 import { slugifyName, randomSlugSuffix } from "../utils/slug.js";
 import { linkProspectClinicToPractice } from "./prospectClinics.js";
-import { getDb } from "./connection.js";
+import { getDb, isUniqueViolation } from "./connection.js";
 
 export type VetPracticeRow = {
   id: string;
@@ -50,13 +50,13 @@ export type PracticeSignupInput = {
   prospectClinicId?: string;
 };
 
-function uniqueSlug(base: string): string {
+async function uniqueSlug(base: string): Promise<string> {
   const database = getDb();
   let slug = base || `practice-${randomSlugSuffix()}`;
   let attempt = 0;
 
   while (attempt < 20) {
-    const existing = database
+    const existing = await database
       .prepare("SELECT id FROM vet_practices WHERE slug = ?")
       .get(slug);
     if (!existing) return slug;
@@ -72,12 +72,12 @@ export async function createVetPractice(
 ): Promise<VetPracticeRow> {
   const database = getDb();
   const baseSlug = slugifyName(input.name);
-  const slug = uniqueSlug(baseSlug);
+  const slug = await uniqueSlug(baseSlug);
   const passwordHash = await hashPassword(input.password);
   const id = randomUUID();
 
   try {
-    database
+    await database
       .prepare(
         `INSERT INTO vet_practices (
           id, name, slug, email, password_hash,
@@ -98,8 +98,7 @@ export async function createVetPractice(
         input.zip?.trim() ?? null,
       );
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "";
-    if (message.includes("UNIQUE constraint failed: vet_practices.email")) {
+    if (isUniqueViolation(err, "vet_practices_email_key")) {
       const error = new Error("An account with this email already exists");
       (error as Error & { status: number }).status = 409;
       throw error;
@@ -108,19 +107,23 @@ export async function createVetPractice(
   }
 
   if (input.prospectClinicId) {
-    linkProspectClinicToPractice(input.prospectClinicId, id);
+    await linkProspectClinicToPractice(input.prospectClinicId, id);
   }
 
-  return database
+  return (await database
     .prepare("SELECT * FROM vet_practices WHERE id = ?")
-    .get(id) as VetPracticeRow;
+    .get(id)) as VetPracticeRow;
 }
 
 export async function loginPractice(
   email: string,
   password: string,
-): Promise<{ practice: VetPracticeRow; token: string; mustChangePassword: boolean }> {
-  const practice = getPracticeByEmail(email);
+): Promise<{
+  practice: VetPracticeRow;
+  token: string;
+  mustChangePassword: boolean;
+}> {
+  const practice = await getPracticeByEmail(email);
   if (!practice) {
     throw new HttpError(401, INVALID_CREDENTIALS_MESSAGE);
   }
@@ -129,11 +132,15 @@ export async function loginPractice(
 
   const valid = await verifyPassword(password, practice.password_hash);
   if (!valid) {
-    recordFailedLogin("vet_practices", practice.id, practice.failed_login_attempts);
+    await recordFailedLogin(
+      "vet_practices",
+      practice.id,
+      practice.failed_login_attempts,
+    );
   }
 
-  clearLoginAttempts("vet_practices", practice.id);
-  const refreshed = getPracticeById(practice.id)!;
+  await clearLoginAttempts("vet_practices", practice.id);
+  const refreshed = (await getPracticeById(practice.id))!;
   const token = await signPracticeToken({
     sub: refreshed.id,
     email: refreshed.email,
@@ -151,7 +158,7 @@ export async function changePracticePassword(
   currentPassword: string,
   newPassword: string,
 ): Promise<VetPracticeRow> {
-  const practice = getPracticeById(practiceId);
+  const practice = await getPracticeById(practiceId);
   if (!practice) {
     throw new HttpError(404, "Practice not found");
   }
@@ -162,35 +169,41 @@ export async function changePracticePassword(
   }
 
   const passwordHash = await hashPassword(newPassword);
-  getDb()
+  await getDb()
     .prepare(
       `UPDATE vet_practices SET
         password_hash = ?, must_change_password = 0,
         failed_login_attempts = 0, locked_at = NULL,
-        updated_at = datetime('now')
+        updated_at = now_text()
        WHERE id = ?`,
     )
     .run(passwordHash, practiceId);
 
-  return getPracticeById(practiceId)!;
+  return (await getPracticeById(practiceId))!;
 }
 
-export function getPracticeById(id: string): VetPracticeRow | undefined {
-  return getDb()
+export async function getPracticeById(
+  id: string,
+): Promise<VetPracticeRow | undefined> {
+  return (await getDb()
     .prepare("SELECT * FROM vet_practices WHERE id = ?")
-    .get(id) as VetPracticeRow | undefined;
+    .get(id)) as VetPracticeRow | undefined;
 }
 
-export function getPracticeByEmail(email: string): VetPracticeRow | undefined {
-  return getDb()
+export async function getPracticeByEmail(
+  email: string,
+): Promise<VetPracticeRow | undefined> {
+  return (await getDb()
     .prepare("SELECT * FROM vet_practices WHERE email = ?")
-    .get(email.trim().toLowerCase()) as VetPracticeRow | undefined;
+    .get(email.trim().toLowerCase())) as VetPracticeRow | undefined;
 }
 
-export function getPracticeBySlug(slug: string): VetPracticeRow | undefined {
-  return getDb()
+export async function getPracticeBySlug(
+  slug: string,
+): Promise<VetPracticeRow | undefined> {
+  return (await getDb()
     .prepare("SELECT * FROM vet_practices WHERE slug = ?")
-    .get(slug.trim().toLowerCase()) as VetPracticeRow | undefined;
+    .get(slug.trim().toLowerCase())) as VetPracticeRow | undefined;
 }
 
 export function toPublicPractice(row: VetPracticeRow) {
@@ -271,10 +284,10 @@ function mapPracticeReferralRow(r: {
   };
 }
 
-export function getPracticeReferrals(practiceId: string) {
+export async function getPracticeReferrals(practiceId: string) {
   const database = getDb();
 
-  const applications = database
+  const applications = (await database
     .prepare(
       `SELECT
          la.id AS application_id,
@@ -299,7 +312,7 @@ export function getPracticeReferrals(practiceId: string) {
        WHERE la.practice_id = ?
        ORDER BY la.updated_at DESC`,
     )
-    .all(practiceId) as Array<{
+    .all(practiceId)) as Array<{
     application_id: string;
     customer_id: string;
     client_user_id: string;
@@ -321,7 +334,7 @@ export function getPracticeReferrals(practiceId: string) {
 
   type ReferralRow = Parameters<typeof mapPracticeReferralRow>[0];
 
-  const legacyOnly = database
+  const legacyOnly = (await database
     .prepare(
       `SELECT
          NULL AS application_id,
@@ -349,14 +362,14 @@ export function getPracticeReferrals(practiceId: string) {
          )
        ORDER BY c.created_at DESC`,
     )
-    .all(practiceId, practiceId) as ReferralRow[];
+    .all(practiceId, practiceId)) as ReferralRow[];
 
   return [...applications, ...legacyOnly].map(mapPracticeReferralRow);
 }
 
-export function getPracticeStats(practiceId: string) {
+export async function getPracticeStats(practiceId: string) {
   const inProgressList = IN_PROGRESS_STATUSES.map((s) => `'${s}'`).join(", ");
-  const row = getDb()
+  const row = (await getDb()
     .prepare(
       `SELECT
          COUNT(*) AS total,
@@ -368,7 +381,7 @@ export function getPracticeStats(practiceId: string) {
        FROM loan_applications
        WHERE practice_id = ?`,
     )
-    .get(practiceId) as {
+    .get(practiceId)) as {
     total: number;
     submitted: number;
     vet_approved: number;
@@ -377,7 +390,7 @@ export function getPracticeStats(practiceId: string) {
     in_progress: number;
   };
 
-  const legacy = getDb()
+  const legacy = (await getDb()
     .prepare(
       `SELECT COUNT(*) AS n FROM customers c
        WHERE c.practice_id = ?
@@ -386,7 +399,7 @@ export function getPracticeStats(practiceId: string) {
            WHERE la.customer_id = c.id AND la.practice_id = ?
          )`,
     )
-    .get(practiceId, practiceId) as { n: number };
+    .get(practiceId, practiceId)) as { n: number };
 
   const legacyCount = legacy.n ?? 0;
 
@@ -400,7 +413,7 @@ export function getPracticeStats(practiceId: string) {
   };
 }
 
-export function createApplicantFromReferral(input: {
+export async function createApplicantFromReferral(input: {
   practiceId: string;
   referralSlug: string;
   applicantName: string;
@@ -411,7 +424,7 @@ export function createApplicantFromReferral(input: {
   const clientUserId = `apply-${randomUUID()}`;
   const id = randomUUID();
 
-  database
+  await database
     .prepare(
       `INSERT INTO customers (
         id, client_user_id, email, applicant_name,
@@ -427,9 +440,9 @@ export function createApplicantFromReferral(input: {
       input.referralSlug,
     );
 
-  const row = database
+  const row = (await database
     .prepare("SELECT * FROM customers WHERE id = ?")
-    .get(id) as {
+    .get(id)) as {
     id: string;
     client_user_id: string;
     email: string | null;

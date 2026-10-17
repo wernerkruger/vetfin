@@ -3,7 +3,8 @@ import { getDb } from "./connection.js";
 type MonthlyCount = { month: string; count: number };
 type MonthlyAmount = { month: string; amount: number; count: number };
 
-export type RepaymentBucket = "paid_off" | "on_time" | "behind" | "pending_first";
+export type RepaymentBucket =
+  "paid_off" | "on_time" | "behind" | "pending_first";
 
 export type AdminBiAnalytics = {
   generatedAt: string;
@@ -108,33 +109,33 @@ function pct(part: number, total: number): number {
   return Math.round((part / total) * 1000) / 10;
 }
 
-export function getAdminBiAnalytics(): AdminBiAnalytics {
+export async function getAdminBiAnalytics(): Promise<AdminBiAnalytics> {
   const database = getDb();
 
-  const practiceMonthly = database
+  const practiceMonthly = (await database
     .prepare(
-      `SELECT strftime('%Y-%m', created_at) AS month, COUNT(*) AS count
+      `SELECT SUBSTR(created_at, 1, 7) AS month, COUNT(*) AS count
        FROM vet_practices
        GROUP BY month
        ORDER BY month`,
     )
-    .all() as MonthlyCount[];
+    .all()) as MonthlyCount[];
 
-  const practiceTotal = database
+  const practiceTotal = (await database
     .prepare("SELECT COUNT(*) AS n FROM vet_practices")
-    .get() as { n: number };
+    .get()) as { n: number };
 
-  const borrowerMonthly = database
+  const borrowerMonthly = (await database
     .prepare(
-      `SELECT strftime('%Y-%m', created_at) AS month, COUNT(*) AS count
+      `SELECT SUBSTR(created_at, 1, 7) AS month, COUNT(*) AS count
        FROM customers
        WHERE email IS NOT NULL
        GROUP BY month
        ORDER BY month`,
     )
-    .all() as MonthlyCount[];
+    .all()) as MonthlyCount[];
 
-  const borrowerTotals = database
+  const borrowerTotals = (await database
     .prepare(
       `SELECT
          COUNT(*) AS total,
@@ -142,12 +143,12 @@ export function getAdminBiAnalytics(): AdminBiAnalytics {
        FROM customers
        WHERE email IS NOT NULL`,
     )
-    .get() as { total: number; with_login: number };
+    .get()) as { total: number; with_login: number };
 
-  const disbursementMonthly = database
+  const disbursementMonthly = (await database
     .prepare(
       `SELECT
-         strftime('%Y-%m', disbursed_at) AS month,
+         SUBSTR(disbursed_at, 1, 7) AS month,
          COUNT(*) AS count,
          COALESCE(SUM(loan_amount), 0) AS amount
        FROM loan_applications
@@ -155,9 +156,9 @@ export function getAdminBiAnalytics(): AdminBiAnalytics {
        GROUP BY month
        ORDER BY month`,
     )
-    .all() as MonthlyAmount[];
+    .all()) as MonthlyAmount[];
 
-  const disbursementTotals = database
+  const disbursementTotals = (await database
     .prepare(
       `SELECT
          SUM(CASE WHEN disbursement_status = 'disbursed' THEN 1 ELSE 0 END) AS disbursed_count,
@@ -167,14 +168,14 @@ export function getAdminBiAnalytics(): AdminBiAnalytics {
        FROM loan_applications
        WHERE disbursement_status IS NOT NULL`,
     )
-    .get() as {
+    .get()) as {
     disbursed_count: number;
     disbursed_amount: number;
     pending_count: number;
     pending_amount: number;
   };
 
-  const repaymentLoans = database
+  const repaymentLoans = (await database
     .prepare(
       `SELECT id, status, loan_amount, amount_repaid, monthly_payment, term_months,
               disbursement_status, disbursed_at, approved_at
@@ -182,7 +183,7 @@ export function getAdminBiAnalytics(): AdminBiAnalytics {
        WHERE status = 'paid_off'
           OR disbursement_status = 'disbursed'`,
     )
-    .all() as RepaymentLoanRow[];
+    .all()) as RepaymentLoanRow[];
 
   const byCount: Record<RepaymentBucket, number> = {
     paid_off: 0,
@@ -214,10 +215,7 @@ export function getAdminBiAnalytics(): AdminBiAnalytics {
   }
 
   const totalActiveLoans =
-    byCount.paid_off +
-    byCount.on_time +
-    byCount.behind +
-    byCount.pending_first;
+    byCount.paid_off + byCount.on_time + byCount.behind + byCount.pending_first;
   const totalOutstanding =
     byOutstanding.paid_off +
     byOutstanding.on_time +

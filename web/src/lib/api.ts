@@ -442,6 +442,8 @@ export type LoanApplication = {
   customerId: string;
   practiceId: string;
   practiceName: string | null;
+  /** "City, ST" of the vet clinic, when known. */
+  practiceLocation?: string | null;
   referralSlug: string;
   status: string;
   statusLabel?: string;
@@ -460,8 +462,110 @@ export type LoanApplication = {
   disbursementStatus?: "pending" | "disbursed" | null;
   disbursementStatusLabel?: string | null;
   disbursedAt?: string | null;
+  repaymentPlan?: SelectedRepaymentPlan | null;
+  /** Borrower dashboard only: next scheduled payment on a funded loan. */
+  nextPayment?: { dueDate: string; amount: number } | null;
+  overdue?: { amount: number; daysOverdue: number; installments: number } | null;
   createdAt: string;
   updatedAt: string;
+};
+
+export type SelectedRepaymentPlan = {
+  termMonths: number;
+  monthlyPayment: number | null;
+  finalPayment: number | null;
+  interestRate: number | null;
+  apr: number | null;
+  originationFee: number | null;
+  amountFinanced: number | null;
+  financeCharge: number | null;
+  totalOfPayments: number | null;
+  firstPaymentDueDate: string | null;
+  selectedAt: string;
+  tilaAcceptedAt: string | null;
+  /** The 2% origination fee is paid up front; funding waits until it's "paid". */
+  originationFeeStatus: "due" | "paid" | null;
+  originationFeePaidAt: string | null;
+};
+
+export type ScheduledPayment = {
+  number: number;
+  dueDate: string;
+  amount: number;
+  principal: number;
+  interest: number;
+  balanceAfter: number;
+};
+
+export type RepaymentOption = {
+  termMonths: number;
+  /** Paid to the clinic; accrues interest. */
+  loanAmount: number;
+  /** Paid by the borrower before funding. */
+  originationFee: number;
+  /** TILA amount financed = loan amount − origination fee. */
+  amountFinanced: number;
+  interestRatePct: number;
+  originationFeePct: number;
+  monthlyPayment: number;
+  finalPayment: number;
+  totalInterest: number;
+  financeCharge: number;
+  totalOfPayments: number;
+  apr: number;
+  firstPaymentDueDate: string;
+  schedule: ScheduledPayment[];
+};
+
+export type RepaymentOptionsResponse = {
+  pricing: {
+    interestRatePct: number;
+    originationFeePct: number;
+    firstPaymentDays: number;
+  };
+  selectedTermMonths: number | null;
+  options: RepaymentOption[];
+};
+
+/** Truth in Lending (Reg Z) closed-end credit disclosure, as built by the API. */
+export type TilaDisclosure = {
+  version: string;
+  fingerprint: string;
+  generatedAt: string;
+  isEstimate: boolean;
+  assumedFundingDate: string;
+  creditor: { name: string; address: string | null };
+  borrower: { name: string; address: string | null };
+  applicationId: string;
+  clinic: { name: string; location: string | null };
+  apr: number;
+  financeCharge: number;
+  amountFinanced: number;
+  totalOfPayments: number;
+  paymentSchedule: Array<{ count: number; amount: number; when: string }>;
+  termMonths: number;
+  interestRatePct: number;
+  loanAmount: number;
+  originationFee: number;
+  originationFeePct: number;
+  monthlyPayment: number;
+  finalPayment: number;
+  firstPaymentDueDate: string;
+  schedule: ScheduledPayment[];
+  itemization: {
+    paidToClinicOnYourBehalf: number;
+    paidToYouDirectly: number;
+    prepaidFinanceCharge: number;
+  };
+  lateCharge: string;
+  prepayment: string;
+  security: string;
+  additionalTerms: string;
+  acceptance?: {
+    acceptedAt: string;
+    signatureName: string;
+    esignConsentAt: string;
+  };
 };
 
 export type BorrowerDashboard = {
@@ -651,11 +755,45 @@ export async function sandboxConnectApplication(applicationId: string) {
   );
 }
 
-export async function submitApplication(applicationId: string) {
+export async function fetchRepaymentOptions(applicationId: string) {
+  return borrowerFetch<RepaymentOptionsResponse>(
+    `/api/applications/${applicationId}/repayment-options`,
+  );
+}
+
+export async function selectRepaymentPlan(
+  applicationId: string,
+  termMonths: number,
+) {
+  return borrowerFetch<{ application: LoanApplication }>(
+    `/api/applications/${applicationId}/repayment-plan`,
+    { method: "POST", body: JSON.stringify({ termMonths }) },
+  );
+}
+
+export async function fetchTilaDisclosure(applicationId: string) {
+  return borrowerFetch<{ disclosure: TilaDisclosure }>(
+    `/api/applications/${applicationId}/disclosure`,
+  );
+}
+
+/** Accepts the Truth in Lending disclosure (e-signature) and submits the application. */
+export async function submitApplication(
+  applicationId: string,
+  acceptance: {
+    fingerprint: string;
+    signatureName: string;
+    esignConsent: boolean;
+    acknowledged: boolean;
+  },
+) {
   return borrowerFetch<{
     application: LoanApplication;
     practice: VetPractice | null;
-  }>(`/api/applications/${applicationId}/submit`, { method: "POST" });
+  }>(`/api/applications/${applicationId}/submit`, {
+    method: "POST",
+    body: JSON.stringify(acceptance),
+  });
 }
 
 export async function cancelLoanApplication(applicationId: string) {
@@ -671,6 +809,7 @@ export type AdminApplication = LoanApplication & {
   practiceStatusLabel: string;
   canApproveFunding: boolean;
   canDeclineFunding: boolean;
+  canMarkOriginationFeePaid: boolean;
 };
 
 export type AdminPendingFundingApplication = AdminApplication & {
@@ -910,3 +1049,160 @@ export async function fetchAdminProspectClinicsExport(
     `/api/admin/prospect-clinics/export${qs ? `?${qs}` : ""}`,
   );
 }
+
+export async function fetchAdminTilaDisclosure(applicationId: string) {
+  return adminFetch<{ disclosure: TilaDisclosure }>(
+    `/api/admin/applications/${applicationId}/disclosure`,
+  );
+}
+
+export async function adminMarkOriginationFeePaid(applicationId: string) {
+  return adminFetch<{ application: LoanApplication }>(
+    `/api/admin/applications/${applicationId}/origination-fee/paid`,
+    { method: "POST" },
+  );
+}
+
+// ---------- Admin loan servicing ----------
+
+export type LoanServicingSummary =
+  | { hasSchedule: false }
+  | {
+      hasSchedule: true;
+      nextDue: { dueDate: string; amount: number } | null;
+      overdue: { amount: number; daysOverdue: number; installments: number } | null;
+      remainingScheduled: number;
+      payoff: { asOf: string; principal: number; interest: number; total: number } | null;
+      paymentsRemaining: number;
+    };
+
+export type AdminLoanListItem = LoanApplication & {
+  borrowerName: string;
+  borrowerEmail: string | null;
+  servicing: LoanServicingSummary;
+};
+
+export type AdminLoanFilter =
+  | "all"
+  | "active"
+  | "overdue"
+  | "pending"
+  | "paid_off"
+  | "cancelled"
+  | "written_off";
+
+export type PaymentMethod = "ach" | "card" | "check" | "cash" | "wire" | "other";
+export type ContactMethod = "phone" | "email" | "sms" | "in_person" | "other";
+
+export type AdminLoanDetail = {
+  today: string;
+  loan: LoanApplication;
+  borrower: { id: string; name: string; email: string | null; phone: string | null };
+  closure: {
+    cancelledAt: string | null;
+    cancelledBy: string | null;
+    cancelReason: string | null;
+    writtenOffAt: string | null;
+    writtenOffBy: string | null;
+    writeOffReason: string | null;
+    writtenOffAmount: number | null;
+    paidOffAt: string | null;
+  };
+  servicing: LoanServicingSummary;
+  schedule: Array<{
+    id: string;
+    number: number;
+    dueDate: string;
+    originalDueDate: string;
+    amountDue: number;
+    principal: number;
+    interest: number;
+    amountPaid: number;
+    status: "scheduled" | "partial" | "paid" | "closed_early" | "written_off";
+    paidAt: string | null;
+    isLate: boolean;
+  }>;
+  payments: Array<{
+    id: string;
+    amount: number;
+    receivedOn: string;
+    method: PaymentMethod;
+    reference: string | null;
+    kind: "regular" | "payoff";
+    recordedBy: string;
+    createdAt: string;
+    voidedAt: string | null;
+    voidedBy: string | null;
+    voidReason: string | null;
+  }>;
+  notes: Array<{
+    id: string;
+    body: string;
+    contactMethod: ContactMethod | null;
+    author: string;
+    createdAt: string;
+  }>;
+  audit: Array<{
+    id: string;
+    action: string;
+    reason: string | null;
+    details: Record<string, unknown>;
+    actor: string;
+    createdAt: string;
+  }>;
+  actions: {
+    canCancel: boolean;
+    canWriteOff: boolean;
+    canReschedule: boolean;
+    canRecordPayment: boolean;
+  };
+  disclosure: TilaDisclosure | null;
+};
+
+export async function fetchAdminLoans(filter: AdminLoanFilter, q?: string) {
+  const params = new URLSearchParams({ filter });
+  if (q?.trim()) params.set("q", q.trim());
+  return adminFetch<{
+    loans: AdminLoanListItem[];
+    counts: { active: number; overdue: number; pending: number } | null;
+  }>(`/api/admin/loans?${params.toString()}`);
+}
+
+export async function fetchAdminLoan(loanId: string) {
+  return adminFetch<AdminLoanDetail>(`/api/admin/loans/${loanId}`);
+}
+
+function adminLoanAction(loanId: string, path: string, body: unknown) {
+  return adminFetch<AdminLoanDetail>(`/api/admin/loans/${loanId}/${path}`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export const adminCancelLoan = (loanId: string, reason: string) =>
+  adminLoanAction(loanId, "cancel", { reason });
+
+export const adminWriteOffLoan = (loanId: string, reason: string) =>
+  adminLoanAction(loanId, "write-off", { reason });
+
+export const adminRescheduleLoan = (loanId: string, nextDueDate: string, reason: string) =>
+  adminLoanAction(loanId, "reschedule", { nextDueDate, reason });
+
+export const adminRecordLoanPayment = (
+  loanId: string,
+  payment: {
+    amount: number;
+    receivedOn: string;
+    method: PaymentMethod;
+    reference?: string;
+    payoff: boolean;
+  },
+) => adminLoanAction(loanId, "payments", payment);
+
+export const adminVoidLoanPayment = (loanId: string, paymentId: string, reason: string) =>
+  adminLoanAction(loanId, `payments/${paymentId}/void`, { reason });
+
+export const adminAddLoanNote = (
+  loanId: string,
+  note: { body: string; contactMethod: ContactMethod | null },
+) => adminLoanAction(loanId, "notes", note);

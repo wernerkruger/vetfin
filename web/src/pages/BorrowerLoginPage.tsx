@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";
 import { useBorrowerAuth } from "../context/BorrowerAuthContext";
 import "./PracticePortal.css";
@@ -37,7 +37,7 @@ export default function BorrowerLoginPage() {
 
   return (
     <AuthLayout
-      title="Your account"
+      title="Client login"
       lead="Log in to view your loans, track repayments, and apply for new financing."
     >
       <form className="portal-form" onSubmit={handleSubmit}>
@@ -65,6 +65,9 @@ export default function BorrowerLoginPage() {
       <p className="portal-footer-text">
         Applying through your vet? Use the referral link from your clinic to
         start an application.
+      </p>
+      <p className="portal-footer-text">
+        Vet clinic? <Link to="/practice/login">Go to vet clinic login</Link>
       </p>
     </AuthLayout>
   );

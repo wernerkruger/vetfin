@@ -1,5 +1,24 @@
 # Local production-like stack (also used on AWS EC2 — see README)
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      # Read from your shell / --env-file (deploy.sh loads api/.env). Defaults are for local dev only.
+      POSTGRES_DB: ${DB_NAME:-vetfin}
+      POSTGRES_USER: ${DB_USER:-vetfin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-vetfin}
+    volumes:
+      - vetfin-pg:/var/lib/postgresql/data
+    ports:
+      # Only reachable from this machine (for `npm run dev` and the migration script).
+      - "127.0.0.1:${DB_PUBLISH_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
   api:
     build:
       context: .
@@ -13,9 +32,17 @@ services:
       # AWS: set APP_ENV=production and the real host (see deploy/aws/.env.production.example).
       HOST: 0.0.0.0
       PORT: 3001
-      DATABASE_PATH: /data/vetfin.sqlite
-    volumes:
-      - vetfin-data:/data
+      # Inside Docker the API talks to the `db` service. This overrides any DATABASE_URL in
+      # api/.env (that one is for running the API outside Docker, e.g. npm run dev).
+      DATABASE_URL: ""
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-vetfin}
+      DB_USER: ${DB_USER:-vetfin}
+      DB_PASSWORD: ${DB_PASSWORD:-vetfin}
+    depends_on:
+      db:
+        condition: service_healthy
     expose:
       - "3001"
     restart: unless-stopped
@@ -45,4 +72,6 @@ services:
     restart: unless-stopped
 
 volumes:
+  vetfin-pg:
+  # Old SQLite volume — kept so existing data isn't lost; no longer mounted by the API.
   vetfin-data:

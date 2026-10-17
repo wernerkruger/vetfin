@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import express from "express";
 import { getConfig } from "./config.js";
-import { getDb } from "./db/connection.js";
+import { closeDb, initDb } from "./db/connection.js";
 import { createPlaidClient } from "./plaid/client.js";
 import { customersRouter } from "./routes/customers.js";
 import { plaidRouter } from "./routes/plaid.js";
@@ -12,13 +12,15 @@ import { borrowersRouter } from "./routes/borrowers.js";
 import { practicesRouter } from "./routes/practices.js";
 import { referralRouter } from "./routes/referral.js";
 import { adminRouter } from "./routes/admin.js";
+import { adminLoansRouter } from "./routes/adminLoans.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 dotenv.config({ path: ".env" });
 dotenv.config({ path: ".env.local", override: true });
 
 const config = getConfig();
-getDb();
+await initDb();
+console.log(`Database: ${config.database.displayUrl}`);
 
 if (!config.dataEncryptionKey) {
   console.warn(
@@ -46,7 +48,7 @@ app.get("/", (_req, res) => {
     message: "VetFin API — use the routes below (not a web UI).",
     health: "/health",
     customers: "POST /api/customers, GET /api/customers/:id",
-    database: config.databasePath,
+    database: "postgres",
     plaid: {
       status: "GET /api/plaid/status",
       linkToken: "POST /api/plaid/link-token",
@@ -67,6 +69,7 @@ app.use("/api/customers", customersRouter());
 app.use("/api/borrowers", borrowersRouter());
 app.use("/api/applications", applicationsRouter(plaid));
 app.use("/api/practices", practicesRouter());
+app.use("/api/admin/loans", adminLoansRouter());
 app.use("/api/admin", adminRouter());
 app.use("/api/referral", referralRouter());
 app.use("/api/plaid", plaidRouter(plaid));
@@ -77,13 +80,17 @@ const host = process.env.HOST ?? "0.0.0.0";
 
 const server = app.listen(config.port, host, () => {
   console.log(`VetFin API listening on http://${host}:${config.port}`);
-  console.log(`APP_ENV: ${config.appEnv} | Public app URL: ${config.publicAppUrl}`);
+  console.log(
+    `APP_ENV: ${config.appEnv} | Public app URL: ${config.publicAppUrl}`,
+  );
   console.log(`Plaid environment: ${config.plaidEnv}`);
 });
 
 function shutdown(signal: string) {
   console.log(`${signal} received — shutting down`);
-  server.close(() => process.exit(0));
+  server.close(() => {
+    void closeDb().finally(() => process.exit(0));
+  });
 }
 
 process.on("SIGTERM", () => shutdown("SIGTERM"));

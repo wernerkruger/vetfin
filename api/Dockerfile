@@ -1,7 +1,9 @@
-# VetFin API — production image (Node + better-sqlite3)
+# VetFin API — production image (Node + Postgres via `pg`)
 # Build context: repository root (see docker-compose.yml)
 FROM node:22-bookworm-slim AS build
 
+# Build tools only needed if better-sqlite3 (dev dependency, used by the one-off
+# SQLite→Postgres migration script) has to compile from source.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 make g++ \
     && rm -rf /var/lib/apt/lists/*
@@ -18,23 +20,18 @@ RUN npm run build
 
 FROM node:22-bookworm-slim AS runtime
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 make g++ \
-    && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
 
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3001
-ENV DATABASE_PATH=/data/vetfin.sqlite
 
 COPY api/package.json api/package-lock.json ./
-RUN npm ci --omit=dev && npm rebuild better-sqlite3
+RUN npm ci --omit=dev
 
 COPY --from=build /app/dist ./dist
 
-RUN mkdir -p /data && chown -R node:node /data /app
+RUN chown -R node:node /app
 
 USER node
 

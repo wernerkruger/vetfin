@@ -22,7 +22,7 @@ export const requirePracticeAuth: RequestHandler = async (req, res, next) => {
   try {
     const token = header.slice(7);
     const payload = await verifyPracticeToken(token);
-    const practice = getPracticeById(payload.sub);
+    const practice = await getPracticeById(payload.sub);
     if (!practice) {
       res.status(401).json({ error: "Practice not found" });
       return;

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import DashboardShell, { type ShellNavItem } from "../components/DashboardShell";
+import DashboardShell, {
+  type ShellNavItem,
+} from "../components/DashboardShell";
 import { HomeIcon } from "../components/icons";
 import { useBorrowerAuth } from "../context/BorrowerAuthContext";
 import {
@@ -9,6 +11,7 @@ import {
   type BorrowerDashboard,
   type LoanApplication,
 } from "../lib/api";
+import { formatCalendarDate, formatPct, formatUsdCents } from "../lib/format";
 import "./PracticePortal.css";
 
 const NAV_ITEMS: ShellNavItem[] = [
@@ -30,8 +33,55 @@ function formatRate(rate: number | null | undefined): string {
 }
 
 function isInProgress(status: string): boolean {
-  return ["draft", "profile_complete", "loan_details", "bank_linked"].includes(
-    status,
+  return [
+    "draft",
+    "profile_complete",
+    "loan_details",
+    "bank_linked",
+    "plan_selected",
+  ].includes(status);
+}
+
+function PlanSummary({ loan }: { loan: LoanApplication }) {
+  const plan = loan.repaymentPlan;
+  if (!plan) return null;
+  return (
+    <div className="borrower-plan">
+      <p style={{ margin: 0 }}>
+        <strong>Payment plan:</strong> {plan.termMonths} months ·{" "}
+        {formatUsdCents(plan.monthlyPayment)}/month · {plan.interestRate}%
+        interest ({formatPct(plan.apr)} APR incl. fee)
+      </p>
+      <p style={{ margin: "0.25rem 0 0", color: "var(--color-ink-muted)" }}>
+        Total of payments {formatUsdCents(plan.totalOfPayments)}
+        {loan.nextPayment
+          ? null
+          : plan.firstPaymentDueDate
+            ? ` · first payment due ${formatCalendarDate(plan.firstPaymentDueDate)}`
+            : " · first payment due 30 days after funding"}
+      </p>
+      {plan.originationFeeStatus === "due" ? (
+        <p className="borrower-plan__fee">
+          <strong>
+            Origination fee due: {formatUsdCents(plan.originationFee)}.
+          </strong>{" "}
+          Your loan can&apos;t be funded until it&apos;s paid. We&apos;ll
+          contact you with payment instructions.
+        </p>
+      ) : plan.originationFeeStatus === "paid" ? (
+        <p style={{ margin: "0.25rem 0 0", color: "var(--color-ink-muted)" }}>
+          Origination fee of {formatUsdCents(plan.originationFee)} paid.
+        </p>
+      ) : null}
+      {plan.tilaAcceptedAt ? (
+        <Link
+          to={`/borrower/loans/${loan.id}/disclosure`}
+          className="borrower-plan__link"
+        >
+          View Truth in Lending disclosure
+        </Link>
+      ) : null}
+    </div>
   );
 }
 
@@ -72,18 +122,34 @@ function LoanCard({
     <article className="portal-card borrower-loan-card">
       <div className="borrower-loan-card__header">
         <div>
+          <p className="borrower-loan-card__eyebrow">Vet clinic</p>
           <h3 style={{ margin: 0, fontFamily: "var(--font-display)" }}>
             {loan.practiceName ?? loan.referralSlug}
           </h3>
+          {loan.practiceLocation ? (
+            <p
+              style={{
+                margin: "0.1rem 0 0",
+                color: "var(--color-ink-muted)",
+                fontSize: "0.875rem",
+              }}
+            >
+              {loan.practiceLocation}
+            </p>
+          ) : null}
           {loan.animalName ? (
-            <p style={{ margin: "0.25rem 0 0", color: "var(--color-ink-muted)" }}>
+            <p
+              style={{ margin: "0.25rem 0 0", color: "var(--color-ink-muted)" }}
+            >
               {loan.animalName}
               {loan.loanAmount != null
                 ? ` · ${formatUsd(loan.loanAmount)} requested`
                 : null}
             </p>
           ) : loan.loanAmount != null ? (
-            <p style={{ margin: "0.25rem 0 0", color: "var(--color-ink-muted)" }}>
+            <p
+              style={{ margin: "0.25rem 0 0", color: "var(--color-ink-muted)" }}
+            >
               {formatUsd(loan.loanAmount)} requested
             </p>
           ) : null}
@@ -93,6 +159,28 @@ function LoanCard({
         </span>
       </div>
 
+      <PlanSummary loan={loan} />
+
+      {loan.status === "active" && loan.nextPayment ? (
+        <div
+          className={`borrower-next ${loan.overdue ? "borrower-next--late" : ""}`}
+        >
+          {loan.overdue ? (
+            <p style={{ margin: 0 }}>
+              <strong>{formatUsdCents(loan.overdue.amount)} is overdue</strong>{" "}
+              ({loan.overdue.daysOverdue} days). Please contact us if you need
+              help.
+            </p>
+          ) : (
+            <p style={{ margin: 0 }}>
+              <strong>Next payment:</strong>{" "}
+              {formatUsdCents(loan.nextPayment.amount)} due{" "}
+              {formatCalendarDate(loan.nextPayment.dueDate)}
+            </p>
+          )}
+        </div>
+      ) : null}
+
       {showTerms ? (
         <dl className="borrower-loan-details">
           <div>
@@ -101,7 +189,7 @@ function LoanCard({
           </div>
           <div>
             <dt>Monthly payment</dt>
-            <dd>{formatUsd(loan.monthlyPayment)}</dd>
+            <dd>{formatUsdCents(loan.monthlyPayment)}</dd>
           </div>
           <div>
             <dt>Term remaining</dt>
@@ -127,37 +215,43 @@ function LoanCard({
           </p>
           {loan.vetApproved == null ? (
             confirming ? (
-              <div className="borrower-cancel-confirm" style={{ marginTop: "1rem" }}>
-              <p style={{ margin: "0 0 0.75rem", fontSize: "0.9375rem" }}>
-                Cancel this submission? You can submit a new application later if
-                you change your mind.
-              </p>
-              {cancelError ? (
-                <p className="portal-error" style={{ marginBottom: "0.5rem" }}>
-                  {cancelError}
+              <div
+                className="borrower-cancel-confirm"
+                style={{ marginTop: "1rem" }}
+              >
+                <p style={{ margin: "0 0 0.75rem", fontSize: "0.9375rem" }}>
+                  Cancel this submission? You can submit a new application later
+                  if you change your mind.
                 </p>
-              ) : null}
-              <div className="borrower-cancel-actions">
-                <button
-                  type="button"
-                  className="btn btn--secondary"
-                  disabled={cancelling}
-                  onClick={() => {
-                    setConfirming(false);
-                    setCancelError(null);
-                  }}
-                >
-                  Keep application
-                </button>
-                <button
-                  type="button"
-                  className="btn btn--danger"
-                  disabled={cancelling}
-                  onClick={() => void handleCancel()}
-                >
-                  {cancelling ? "Cancelling…" : "Yes, cancel submission"}
-                </button>
-              </div>
+                {cancelError ? (
+                  <p
+                    className="portal-error"
+                    style={{ marginBottom: "0.5rem" }}
+                  >
+                    {cancelError}
+                  </p>
+                ) : null}
+                <div className="borrower-cancel-actions">
+                  <button
+                    type="button"
+                    className="btn btn--secondary"
+                    disabled={cancelling}
+                    onClick={() => {
+                      setConfirming(false);
+                      setCancelError(null);
+                    }}
+                  >
+                    Keep application
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--danger"
+                    disabled={cancelling}
+                    onClick={() => void handleCancel()}
+                  >
+                    {cancelling ? "Cancelling…" : "Yes, cancel submission"}
+                  </button>
+                </div>
               </div>
             ) : (
               <button
@@ -216,7 +310,9 @@ export default function BorrowerDashboardPage() {
     return fetchBorrowerDashboard()
       .then(setDashboard)
       .catch((err) =>
-        setError(err instanceof Error ? err.message : "Could not load dashboard"),
+        setError(
+          err instanceof Error ? err.message : "Could not load dashboard",
+        ),
       )
       .finally(() => {
         if (!opts?.silent) setLoading(false);
@@ -251,8 +347,8 @@ export default function BorrowerDashboardPage() {
             Apply for a new loan
           </h2>
           <p style={{ color: "var(--color-ink-muted)", margin: "0 0 1rem" }}>
-            Use the referral link from your vet clinic, or enter your clinic&apos;s
-            code if you have it.
+            Use the referral link from your vet clinic, or enter your
+            clinic&apos;s code if you have it.
           </p>
           <Link to="/borrower/apply" className="btn btn--primary">
             Start new application
@@ -266,8 +362,9 @@ export default function BorrowerDashboardPage() {
         ) : loans.length === 0 ? (
           <div className="portal-card">
             <p style={{ margin: 0, color: "var(--color-ink-muted)" }}>
-              You don&apos;t have any loan applications yet. When your vet shares
-              their VetFin link, you can apply from there or use the button above.
+              You don&apos;t have any loan applications yet. When your vet
+              shares their VetFin link, you can apply from there or use the
+              button above.
             </p>
           </div>
         ) : (

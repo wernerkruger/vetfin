@@ -7,6 +7,8 @@ import {
   type AppEnv,
 } from "./env/appEnv.js";
 
+export const LENDER_NAME_PLACEHOLDER = "[Lender name not set]";
+
 const envSchema = z.object({
   PLAID_CLIENT_ID: z.string().min(1),
   PLAID_SECRET: z.string().min(1).optional(),
@@ -14,12 +16,34 @@ const envSchema = z.object({
   PLAID_ENV: z.enum(["sandbox", "production"]).default("sandbox"),
   PORT: z.coerce.number().default(3001),
   CORS_ORIGINS: z.string().default("http://localhost:5173"),
-  DATABASE_PATH: z.string().default("./data/vetfin.sqlite"),
-  DATA_ENCRYPTION_KEY: z.string().min(16).optional(),
-  JWT_SECRET: z.string().min(32).default(
-    "dev-only-change-me-vetfin-jwt-secret-32chars",
+  // Postgres connection. Either set DATABASE_URL, or the individual DB_* parts below.
+  DATABASE_URL: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z.string().min(1).optional(),
   ),
+  DB_HOST: z.string().min(1).default("localhost"),
+  DB_PORT: z.coerce.number().int().positive().default(5432),
+  DB_NAME: z.string().min(1).default("vetfin"),
+  DB_USER: z.string().min(1).default("vetfin"),
+  DB_PASSWORD: z.string().default("vetfin"),
+  // "disable" (default, fine for a DB on the same host/Docker network), "require" (TLS, e.g. AWS RDS)
+  DB_SSL: z.enum(["disable", "require", "verify-full"]).default("disable"),
+  DB_POOL_MAX: z.coerce.number().int().positive().default(10),
+  DATA_ENCRYPTION_KEY: z.string().min(16).optional(),
+  JWT_SECRET: z
+    .string()
+    .min(32)
+    .default("dev-only-change-me-vetfin-jwt-secret-32chars"),
   PUBLIC_APP_URL: z.string().url().default("http://localhost:5173"),
+  // Creditor shown on the Truth in Lending disclosure (your partner bank once signed).
+  LENDER_NAME: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z.string().min(1).default(LENDER_NAME_PLACEHOLDER),
+  ),
+  LENDER_ADDRESS: z.preprocess(
+    (v) => (v === "" ? undefined : v),
+    z.string().min(1).optional(),
+  ),
   ADMIN_USERNAME: z.string().min(1).default("admin"),
   ADMIN_PASSWORD_HASH: z.string().min(1).optional(),
   // Prefer this in Docker — bcrypt hashes contain $ which Compose env_file mangles.
@@ -53,8 +77,21 @@ function loadEnv() {
       );
     }
     if (data.JWT_SECRET === devJwtDefault) {
-      throw new Error("Set a unique JWT_SECRET in production (min 32 characters).");
+      throw new Error(
+        "Set a unique JWT_SECRET in production (min 32 characters).",
+      );
     }
+    if (!data.DATABASE_URL && data.DB_PASSWORD === "vetfin") {
+      console.warn(
+        "DB_PASSWORD is the development default — set DATABASE_URL or a strong DB_PASSWORD in production.",
+      );
+    }
+  }
+
+  if (appEnv === "production" && data.LENDER_NAME === LENDER_NAME_PLACEHOLDER) {
+    console.warn(
+      "LENDER_NAME is not set — Truth in Lending disclosures show a placeholder creditor name.",
+    );
   }
 
   const { publicAppUrl, corsOrigins, warnings } = resolvePublicUrls(
@@ -73,10 +110,11 @@ function loadEnv() {
     plaidEnv: data.PLAID_ENV,
     port: data.PORT,
     corsOrigins,
-    databasePath: data.DATABASE_PATH,
+    database: resolveDatabaseConfig(data),
     dataEncryptionKey: data.DATA_ENCRYPTION_KEY,
     jwtSecret: data.JWT_SECRET,
     publicAppUrl,
+    lender: { name: data.LENDER_NAME, address: data.LENDER_ADDRESS ?? null },
     adminUsername: data.ADMIN_USERNAME,
     adminPasswordHash: resolveAdminPasswordHash(data),
   };
@@ -116,6 +154,57 @@ function resolvePublicUrls(
     );
   }
   return { publicAppUrl, corsOrigins, warnings };
+}
+
+export type DatabaseConfig = {
+  connectionString: string;
+  ssl: "disable" | "require" | "verify-full";
+  poolMax: number;
+  /** Connection string with the password masked — safe to log. */
+  displayUrl: string;
+};
+
+const databaseEnvSchema = envSchema.pick({
+  DATABASE_URL: true,
+  DB_HOST: true,
+  DB_PORT: true,
+  DB_NAME: true,
+  DB_USER: true,
+  DB_PASSWORD: true,
+  DB_SSL: true,
+  DB_POOL_MAX: true,
+});
+
+/** Database settings only — for scripts that don't need the full app config (Plaid etc). */
+export function loadDatabaseConfig(
+  env: NodeJS.ProcessEnv = process.env,
+): DatabaseConfig {
+  return resolveDatabaseConfig(databaseEnvSchema.parse(env));
+}
+
+function resolveDatabaseConfig(
+  data: z.infer<typeof databaseEnvSchema>,
+): DatabaseConfig {
+  const connectionString =
+    data.DATABASE_URL ??
+    `postgres://${encodeURIComponent(data.DB_USER)}:${encodeURIComponent(data.DB_PASSWORD)}` +
+      `@${data.DB_HOST}:${data.DB_PORT}/${encodeURIComponent(data.DB_NAME)}`;
+  return {
+    connectionString,
+    ssl: data.DB_SSL,
+    poolMax: data.DB_POOL_MAX,
+    displayUrl: redactConnectionString(connectionString),
+  };
+}
+
+export function redactConnectionString(connectionString: string): string {
+  try {
+    const url = new URL(connectionString);
+    if (url.password) url.password = "****";
+    return url.toString();
+  } catch {
+    return "(unparseable DATABASE_URL)";
+  }
 }
 
 function resolveAdminPasswordHash(

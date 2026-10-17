@@ -4,7 +4,7 @@ import {
   LOCKED_ACCOUNT_MESSAGE,
   MAX_FAILED_LOGIN_ATTEMPTS,
 } from "../constants/auth.js";
-import { getDb } from "../db/connection.js";
+import { execute } from "../db/connection.js";
 import { HttpError } from "../errors.js";
 
 export type AuthAccountRow = {
@@ -25,46 +25,42 @@ export function assertAccountCanLogin(row: AuthAccountRow): void {
   }
 }
 
-export function recordFailedLogin(
+export async function recordFailedLogin(
   table: "customers" | "vet_practices",
   id: string,
   currentAttempts: number,
-): void {
+): Promise<never> {
   const nextAttempts = currentAttempts + 1;
-  const database = getDb();
 
   if (nextAttempts >= MAX_FAILED_LOGIN_ATTEMPTS) {
-    database
-      .prepare(
-        `UPDATE ${table}
-         SET failed_login_attempts = ?, locked_at = datetime('now'), updated_at = datetime('now')
-         WHERE id = ?`,
-      )
-      .run(nextAttempts, id);
+    await execute(
+      `UPDATE ${table}
+       SET failed_login_attempts = ?, locked_at = now_text(), updated_at = now_text()
+       WHERE id = ?`,
+      [nextAttempts, id],
+    );
     throw new HttpError(403, LOCKED_ACCOUNT_MESSAGE);
   }
 
-  database
-    .prepare(
-      `UPDATE ${table}
-       SET failed_login_attempts = ?, updated_at = datetime('now')
-       WHERE id = ?`,
-    )
-    .run(nextAttempts, id);
+  await execute(
+    `UPDATE ${table}
+     SET failed_login_attempts = ?, updated_at = now_text()
+     WHERE id = ?`,
+    [nextAttempts, id],
+  );
   throw new HttpError(401, INVALID_CREDENTIALS_MESSAGE);
 }
 
-export function clearLoginAttempts(
+export async function clearLoginAttempts(
   table: "customers" | "vet_practices",
   id: string,
-): void {
-  getDb()
-    .prepare(
-      `UPDATE ${table}
-       SET failed_login_attempts = 0, locked_at = NULL, updated_at = datetime('now')
-       WHERE id = ?`,
-    )
-    .run(id);
+): Promise<void> {
+  await execute(
+    `UPDATE ${table}
+     SET failed_login_attempts = 0, locked_at = NULL, updated_at = now_text()
+     WHERE id = ?`,
+    [id],
+  );
 }
 
 export function generateTemporaryPassword(): string {

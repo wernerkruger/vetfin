@@ -4,11 +4,13 @@ import {
   BuildingIcon,
   ChartIcon,
   ClipboardIcon,
+  ClockIcon,
   UsersIcon,
 } from "./icons";
 
 export type AdminSection =
   | "users"
+  | "loans"
   | "new-loans"
   | "disbursements"
   | "bi"
@@ -36,6 +38,12 @@ export function adminNavItems(
       label: "Users",
       icon: <UsersIcon />,
       active: active === "users",
+    },
+    {
+      to: "/admin/loans",
+      label: "Loans",
+      icon: <ClockIcon />,
+      active: active === "loans",
     },
     {
       to: "/admin/new-loans",

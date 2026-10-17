@@ -5,7 +5,7 @@ import type {
 } from "../plaid/client.js";
 import { decryptSecret, encryptSecret } from "../crypto/secrets.js";
 import { getConfig } from "../config.js";
-import { getDb } from "./connection.js";
+import { getDb, withTransaction } from "./connection.js";
 
 export type CustomerRow = {
   id: string;
@@ -78,70 +78,70 @@ export function revealSecret(value: string): string {
   return key ? decryptSecret(value, key) : value;
 }
 
-export function upsertCustomer(input: {
+export async function upsertCustomer(input: {
   clientUserId: string;
   email?: string;
-}): CustomerRow {
+}): Promise<CustomerRow> {
   const database = getDb();
-  const existing = database
+  const existing = (await database
     .prepare("SELECT * FROM customers WHERE client_user_id = ?")
-    .get(input.clientUserId) as CustomerRow | undefined;
+    .get(input.clientUserId)) as CustomerRow | undefined;
 
   if (existing) {
     if (input.email && input.email !== existing.email) {
-      database
+      await database
         .prepare(
-          "UPDATE customers SET email = ?, updated_at = datetime('now') WHERE id = ?",
+          "UPDATE customers SET email = ?, updated_at = now_text() WHERE id = ?",
         )
         .run(input.email, existing.id);
-      return database
+      return (await database
         .prepare("SELECT * FROM customers WHERE id = ?")
-        .get(existing.id) as CustomerRow;
+        .get(existing.id)) as CustomerRow;
     }
     return existing;
   }
 
   const id = randomUUID();
-  database
+  await database
     .prepare(
       `INSERT INTO customers (id, client_user_id, email)
        VALUES (?, ?, ?)`,
     )
     .run(id, input.clientUserId, input.email ?? null);
 
-  return database
+  return (await database
     .prepare("SELECT * FROM customers WHERE id = ?")
-    .get(id) as CustomerRow;
+    .get(id)) as CustomerRow;
 }
 
-export function getCustomerById(id: string): CustomerRow | undefined {
-  return getDb()
+export async function getCustomerById(
+  id: string,
+): Promise<CustomerRow | undefined> {
+  return (await getDb()
     .prepare("SELECT * FROM customers WHERE id = ?")
-    .get(id) as CustomerRow | undefined;
+    .get(id)) as CustomerRow | undefined;
 }
 
-export function savePlaidItem(input: {
+export async function savePlaidItem(input: {
   customerId: string;
   itemId: string;
   accessToken: string;
   institutionId?: string | null;
   institutionName?: string | null;
-}): PlaidItemRow {
+}): Promise<PlaidItemRow> {
   const database = getDb();
-  const existing = database
-    .prepare(
-      "SELECT * FROM plaid_items WHERE customer_id = ? AND item_id = ?",
-    )
-    .get(input.customerId, input.itemId) as PlaidItemRow | undefined;
+  const existing = (await database
+    .prepare("SELECT * FROM plaid_items WHERE customer_id = ? AND item_id = ?")
+    .get(input.customerId, input.itemId)) as PlaidItemRow | undefined;
 
   const protectedToken = protectSecret(input.accessToken);
 
   if (existing) {
-    database
+    await database
       .prepare(
         `UPDATE plaid_items
          SET access_token = ?, institution_id = ?, institution_name = ?,
-             updated_at = datetime('now')
+             updated_at = now_text()
          WHERE id = ?`,
       )
       .run(
@@ -150,13 +150,13 @@ export function savePlaidItem(input: {
         input.institutionName ?? null,
         existing.id,
       );
-    return database
+    return (await database
       .prepare("SELECT * FROM plaid_items WHERE id = ?")
-      .get(existing.id) as PlaidItemRow;
+      .get(existing.id)) as PlaidItemRow;
   }
 
   const id = randomUUID();
-  database
+  await database
     .prepare(
       `INSERT INTO plaid_items (
         id, customer_id, item_id, access_token, institution_id, institution_name
@@ -171,22 +171,22 @@ export function savePlaidItem(input: {
       input.institutionName ?? null,
     );
 
-  return database
+  return (await database
     .prepare("SELECT * FROM plaid_items WHERE id = ?")
-    .get(id) as PlaidItemRow;
+    .get(id)) as PlaidItemRow;
 }
 
-export function getLatestPlaidItemForCustomer(
+export async function getLatestPlaidItemForCustomer(
   customerId: string,
-): (PlaidItemRow & { access_token_plain: string }) | undefined {
-  const row = getDb()
+): Promise<(PlaidItemRow & { access_token_plain: string }) | undefined> {
+  const row = (await getDb()
     .prepare(
       `SELECT * FROM plaid_items
        WHERE customer_id = ?
        ORDER BY updated_at DESC
        LIMIT 1`,
     )
-    .get(customerId) as PlaidItemRow | undefined;
+    .get(customerId)) as PlaidItemRow | undefined;
 
   if (!row) return undefined;
 
@@ -203,14 +203,14 @@ export type SaveLinkedAccountsInput = {
   loanApplicationId?: string | null;
 };
 
-export function saveLinkedBankAccounts(
+export async function saveLinkedBankAccounts(
   input: SaveLinkedAccountsInput | string,
   accountsLegacy?: LinkedPlaidAccount[],
-): BankAccountRow[] {
+): Promise<BankAccountRow[]> {
   const inputNorm: SaveLinkedAccountsInput =
     typeof input === "string"
       ? {
-          customerId: getCustomerIdForPlaidItem(input),
+          customerId: await getCustomerIdForPlaidItem(input),
           plaidItemId: input,
           accounts: accountsLegacy ?? [],
         }
@@ -232,7 +232,7 @@ export function saveLinkedBankAccounts(
       customer_id = ?, loan_application_id = ?,
       name = ?, mask = ?, subtype = ?, type = ?, official_name = ?,
       routing = ?, account_number = ?, owners_json = ?,
-      updated_at = datetime('now')
+      updated_at = now_text()
      WHERE id = ?`,
   );
 
@@ -244,12 +244,11 @@ export function saveLinkedBankAccounts(
       ? protectSecret(account.ach.account)
       : null;
     const ownersJson = JSON.stringify(account.owners);
-    const existing = find.get(plaidItemId, account.accountId) as
-      | BankAccountRow
-      | undefined;
+    const existing = (await find.get(plaidItemId, account.accountId)) as
+      BankAccountRow | undefined;
 
     if (existing) {
-      update.run(
+      await update.run(
         customerId,
         loanApplicationId ?? existing.loan_application_id,
         account.name,
@@ -263,7 +262,7 @@ export function saveLinkedBankAccounts(
         existing.id,
       );
     } else {
-      insert.run(
+      await insert.run(
         randomUUID(),
         customerId,
         loanApplicationId ?? null,
@@ -281,60 +280,61 @@ export function saveLinkedBankAccounts(
     }
 
     saved.push(
-      find.get(plaidItemId, account.accountId) as BankAccountRow,
+      (await find.get(plaidItemId, account.accountId)) as BankAccountRow,
     );
   }
 
   return saved;
 }
 
-function getCustomerIdForPlaidItem(plaidItemId: string): string {
-  const row = getDb()
+async function getCustomerIdForPlaidItem(plaidItemId: string): Promise<string> {
+  const row = (await getDb()
     .prepare("SELECT customer_id FROM plaid_items WHERE id = ?")
-    .get(plaidItemId) as { customer_id: string } | undefined;
+    .get(plaidItemId)) as { customer_id: string } | undefined;
   if (!row) {
     throw new Error(`Plaid item not found: ${plaidItemId}`);
   }
   return row.customer_id;
 }
 
-function getBankAccountIdMap(
+async function getBankAccountIdMap(
   plaidItemId: string,
   plaidAccountIds: string[],
-): Map<string, string> {
+): Promise<Map<string, string>> {
   const database = getDb();
   const map = new Map<string, string>();
   const stmt = database.prepare(
     "SELECT id, plaid_account_id FROM bank_accounts WHERE plaid_item_id = ? AND plaid_account_id = ?",
   );
   for (const plaidAccountId of plaidAccountIds) {
-    const row = stmt.get(plaidItemId, plaidAccountId) as
-      | { id: string; plaid_account_id: string }
-      | undefined;
+    const row = (await stmt.get(plaidItemId, plaidAccountId)) as
+      { id: string; plaid_account_id: string } | undefined;
     if (row) map.set(plaidAccountId, row.id);
   }
   return map;
 }
 
-export function getTransactionsCursor(plaidItemId: string): string | null {
-  const row = getDb()
+export async function getTransactionsCursor(
+  plaidItemId: string,
+): Promise<string | null> {
+  const row = (await getDb()
     .prepare("SELECT transactions_cursor FROM plaid_items WHERE id = ?")
-    .get(plaidItemId) as { transactions_cursor: string | null } | undefined;
+    .get(plaidItemId)) as { transactions_cursor: string | null } | undefined;
   return row?.transactions_cursor ?? null;
 }
 
-export function setTransactionsCursor(
+export async function setTransactionsCursor(
   plaidItemId: string,
   cursor: string | null,
-): void {
-  getDb()
+): Promise<void> {
+  await getDb()
     .prepare(
-      `UPDATE plaid_items SET transactions_cursor = ?, updated_at = datetime('now') WHERE id = ?`,
+      `UPDATE plaid_items SET transactions_cursor = ?, updated_at = now_text() WHERE id = ?`,
     )
     .run(cursor, plaidItemId);
 }
 
-export function applyTransactionSync(
+export async function applyTransactionSync(
   customerId: string,
   plaidItemId: string,
   linkedPlaidAccountIds: string[],
@@ -345,9 +345,12 @@ export function applyTransactionSync(
     cursor: string | null;
   },
   loanApplicationId?: string | null,
-): { added: number; modified: number; removed: number } {
+): Promise<{ added: number; modified: number; removed: number }> {
   const allowed = new Set(linkedPlaidAccountIds);
-  const accountMap = getBankAccountIdMap(plaidItemId, linkedPlaidAccountIds);
+  const accountMap = await getBankAccountIdMap(
+    plaidItemId,
+    linkedPlaidAccountIds,
+  );
   const database = getDb();
 
   const upsert = database.prepare(
@@ -368,7 +371,7 @@ export function applyTransactionSync(
       category_json = excluded.category_json,
       pending = excluded.pending,
       payment_channel = excluded.payment_channel,
-      updated_at = datetime('now')`,
+      updated_at = now_text()`,
   );
 
   const remove = database.prepare(
@@ -378,49 +381,49 @@ export function applyTransactionSync(
   let added = 0;
   let modified = 0;
 
-  const write = database.transaction(
-    (rows: PlaidTransactionPayload[], isNew: boolean) => {
-      for (const tx of rows) {
-        if (!allowed.has(tx.accountId)) continue;
-        const bankAccountId = accountMap.get(tx.accountId);
-        if (!bankAccountId) continue;
+  const write = async (rows: PlaidTransactionPayload[], isNew: boolean) => {
+    for (const tx of rows) {
+      if (!allowed.has(tx.accountId)) continue;
+      const bankAccountId = accountMap.get(tx.accountId);
+      if (!bankAccountId) continue;
 
-        upsert.run(
-          randomUUID(),
-          customerId,
-          loanApplicationId ?? null,
-          bankAccountId,
-          tx.transactionId,
-          tx.accountId,
-          tx.amount,
-          tx.isoCurrencyCode,
-          tx.date,
-          tx.name,
-          tx.merchantName,
-          JSON.stringify(tx.categories),
-          tx.pending ? 1 : 0,
-          tx.paymentChannel,
-        );
-        if (isNew) added += 1;
-        else modified += 1;
-      }
-    },
-  );
-
-  write(sync.added, true);
-  write(sync.modified, false);
+      await upsert.run(
+        randomUUID(),
+        customerId,
+        loanApplicationId ?? null,
+        bankAccountId,
+        tx.transactionId,
+        tx.accountId,
+        tx.amount,
+        tx.isoCurrencyCode,
+        tx.date,
+        tx.name,
+        tx.merchantName,
+        JSON.stringify(tx.categories),
+        tx.pending ? 1 : 0,
+        tx.paymentChannel,
+      );
+      if (isNew) added += 1;
+      else modified += 1;
+    }
+  };
 
   let removed = 0;
-  for (const transactionId of sync.removed) {
-    removed += remove.run(transactionId).changes;
-  }
+  await withTransaction(async () => {
+    await write(sync.added, true);
+    await write(sync.modified, false);
 
-  setTransactionsCursor(plaidItemId, sync.cursor);
+    for (const transactionId of sync.removed) {
+      removed += (await remove.run(transactionId)).changes;
+    }
+
+    await setTransactionsCursor(plaidItemId, sync.cursor);
+  });
 
   return { added, modified, removed };
 }
 
-export function getTransactionsForCustomer(
+export async function getTransactionsForCustomer(
   customerId: string,
   options?: { bankAccountId?: string; limit?: number },
 ) {
@@ -433,14 +436,14 @@ export function getTransactionsForCustomer(
     params.push(options.bankAccountId);
   }
 
-  const rows = getDb()
+  const rows = (await getDb()
     .prepare(
       `SELECT bt.* FROM bank_transactions bt
        WHERE bt.customer_id = ?${accountFilter}
-       ORDER BY bt.date DESC, bt.created_at DESC
+       ORDER BY bt.date DESC, bt.created_at DESC, bt.id
        LIMIT ?`,
     )
-    .all(...params, limit) as BankTransactionRow[];
+    .all(...params, limit)) as BankTransactionRow[];
 
   return rows.map(toPublicTransaction);
 }
@@ -465,17 +468,17 @@ function toPublicTransaction(row: BankTransactionRow) {
   };
 }
 
-export function getTransactionCountsByAccount(
+export async function getTransactionCountsByAccount(
   customerId: string,
-): Record<string, number> {
-  const rows = getDb()
+): Promise<Record<string, number>> {
+  const rows = (await getDb()
     .prepare(
       `SELECT bank_account_id, COUNT(*) AS count
        FROM bank_transactions
        WHERE customer_id = ?
        GROUP BY bank_account_id`,
     )
-    .all(customerId) as Array<{ bank_account_id: string; count: number }>;
+    .all(customerId)) as Array<{ bank_account_id: string; count: number }>;
 
   const counts: Record<string, number> = {};
   for (const row of rows) {
@@ -484,25 +487,25 @@ export function getTransactionCountsByAccount(
   return counts;
 }
 
-export function getCustomerProfile(customerId: string) {
-  const customer = getCustomerById(customerId);
+export async function getCustomerProfile(customerId: string) {
+  const customer = await getCustomerById(customerId);
   if (!customer) return undefined;
 
-  const plaidItems = getDb()
+  const plaidItems = (await getDb()
     .prepare(
-      "SELECT * FROM plaid_items WHERE customer_id = ? ORDER BY created_at DESC",
+      "SELECT * FROM plaid_items WHERE customer_id = ? ORDER BY created_at DESC, id",
     )
-    .all(customerId) as PlaidItemRow[];
+    .all(customerId)) as PlaidItemRow[];
 
-  const bankAccounts = getDb()
+  const bankAccounts = (await getDb()
     .prepare(
       `SELECT * FROM bank_accounts
        WHERE customer_id = ?
-       ORDER BY created_at DESC`,
+       ORDER BY created_at DESC, id`,
     )
-    .all(customerId) as BankAccountRow[];
+    .all(customerId)) as BankAccountRow[];
 
-  const transactionCounts = getTransactionCountsByAccount(customerId);
+  const transactionCounts = await getTransactionCountsByAccount(customerId);
 
   return {
     customer: {

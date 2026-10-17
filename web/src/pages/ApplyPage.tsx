@@ -17,15 +17,23 @@ import {
   exchangeApplicationPlaid,
   fetchCurrentApplication,
   fetchReferralPractice,
+  fetchRepaymentOptions,
+  fetchTilaDisclosure,
   linkApplicationBankAccounts,
   sandboxConnectApplication,
+  selectRepaymentPlan,
   submitApplication,
   updateApplicationLoan,
   updateBorrowerProfile,
   type BorrowerProfile,
   type LoanApplication,
   type PlaidAccountOption,
+  type RepaymentOption,
+  type TilaDisclosure,
 } from "../lib/api";
+import RepaymentPlanPicker from "../components/RepaymentPlanPicker";
+import { formatUsdCents } from "../lib/format";
+import TruthInLendingDisclosure from "../components/TruthInLendingDisclosure";
 import { useBorrowerAuth } from "../context/BorrowerAuthContext";
 import {
   clearBorrowerToken,
@@ -36,7 +44,14 @@ import { ApiError } from "../lib/apiErrors";
 import "./PracticePortal.css";
 import "./ApplyPage.css";
 
-type Step = "account" | "profile" | "loan" | "bank" | "review" | "done";
+type Step =
+  | "account"
+  | "profile"
+  | "loan"
+  | "bank"
+  | "plan"
+  | "disclosure"
+  | "done";
 
 function isDepository(account: PlaidAccountOption) {
   return account.type === "depository";
@@ -66,8 +81,10 @@ function stepFromStatus(status: string): Step {
   switch (status) {
     case "submitted":
       return "done";
+    case "plan_selected":
+      return "disclosure";
     case "bank_linked":
-      return "review";
+      return "plan";
     case "loan_details":
       return "bank";
     case "profile_complete":
@@ -97,6 +114,13 @@ export default function ApplyPage() {
     new Set(),
   );
   const [plaidReady, setPlaidReady] = useState(false);
+
+  const [repaymentOptions, setRepaymentOptions] = useState<RepaymentOption[]>([]);
+  const [selectedTerm, setSelectedTerm] = useState<number | null>(null);
+  const [disclosure, setDisclosure] = useState<TilaDisclosure | null>(null);
+  const [signatureName, setSignatureName] = useState("");
+  const [esignConsent, setEsignConsent] = useState(false);
+  const [acknowledged, setAcknowledged] = useState(false);
 
   const resumeSession = useCallback(async (referralSlug: string) => {
     if (!getBorrowerToken()) return;
@@ -304,7 +328,7 @@ export default function ApplyPage() {
         [...selectedAccountIds],
       );
       setApplication(app);
-      setStep("review");
+      setStep("plan");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not link accounts");
     } finally {
@@ -312,17 +336,73 @@ export default function ApplyPage() {
     }
   }
 
-  async function handleFinalSubmit() {
-    if (!application) return;
+  const applicationId = application?.id;
+
+  useEffect(() => {
+    if (step !== "plan" || !applicationId) return;
+    setRepaymentOptions([]);
+    fetchRepaymentOptions(applicationId)
+      .then((data) => {
+        setRepaymentOptions(data.options);
+        setSelectedTerm((prev) => data.selectedTermMonths ?? prev);
+      })
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : "Could not load payment plans"),
+      );
+  }, [step, applicationId]);
+
+  const loadDisclosure = useCallback(async (id: string) => {
+    setDisclosure(null);
+    const data = await fetchTilaDisclosure(id);
+    setDisclosure(data.disclosure);
+  }, []);
+
+  useEffect(() => {
+    if (step !== "disclosure" || !applicationId) return;
+    loadDisclosure(applicationId).catch((err) =>
+      setError(err instanceof Error ? err.message : "Could not load disclosure"),
+    );
+  }, [step, applicationId, loadDisclosure]);
+
+  async function handleChoosePlan() {
+    if (!application || selectedTerm == null) return;
+    setError(null);
+    setSubmitting(true);
+    try {
+      const result = await selectRepaymentPlan(application.id, selectedTerm);
+      setApplication(result.application);
+      setEsignConsent(false);
+      setAcknowledged(false);
+      setStep("disclosure");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save payment plan");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleFinalSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!application || !disclosure) return;
     setError(null);
     setFieldErrors({});
     setSubmitting(true);
     try {
-      const result = await submitApplication(application.id);
+      const result = await submitApplication(application.id, {
+        fingerprint: disclosure.fingerprint,
+        signatureName,
+        esignConsent,
+        acknowledged,
+      });
       setApplication(result.application);
       setStep("done");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not submit");
+      applyFormError(err, setError, setFieldErrors, "Could not submit");
+      if (err instanceof ApiError && err.status === 409) {
+        // Terms changed underneath us — show the current disclosure again.
+        setAcknowledged(false);
+        void loadDisclosure(application.id);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -355,7 +435,8 @@ export default function ApplyPage() {
     { id: "profile", label: "Your info" },
     { id: "loan", label: "Loan" },
     { id: "bank", label: "Bank" },
-    { id: "review", label: "Review" },
+    { id: "plan", label: "Payment plan" },
+    { id: "disclosure", label: "Review & sign" },
   ];
 
   return (
@@ -715,16 +796,49 @@ export default function ApplyPage() {
           </div>
         )}
 
-        {step === "review" && application && (
+        {step === "plan" && application && (
           <div className="portal-card">
-            <h2 className="apply-section-title">Review &amp; submit</h2>
+            <h2 className="apply-section-title">Choose your payment plan</h2>
+            <p className="apply-section-lead">
+              Your clinic is paid{" "}
+              <strong>${application.loanAmount?.toLocaleString() ?? "—"}</strong>{" "}
+              for your pet&apos;s care, and that is your loan amount. Every plan
+              charges 19% interest on it. A one-time 2% origination fee
+              {repaymentOptions[0]
+                ? ` (${formatUsdCents(repaymentOptions[0].originationFee)})`
+                : ""}{" "}
+              is due before your loan is funded — it is not added to your loan.
+              Your first monthly payment is due 30 days after funding.
+            </p>
+            {repaymentOptions.length === 0 ? (
+              <p className="portal-status">Calculating your options…</p>
+            ) : (
+              <RepaymentPlanPicker
+                options={repaymentOptions}
+                selectedTerm={selectedTerm}
+                onSelect={setSelectedTerm}
+              />
+            )}
+            <button
+              type="button"
+              className="btn btn--primary"
+              disabled={selectedTerm == null || submitting}
+              onClick={() => void handleChoosePlan()}
+            >
+              {submitting ? "Saving…" : "Continue to loan disclosure"}
+            </button>
+          </div>
+        )}
+
+        {step === "disclosure" && application && (
+          <div className="portal-card">
+            <h2 className="apply-section-title">Review &amp; sign</h2>
             <ul className="apply-review-list">
               <li>
                 <strong>Borrower:</strong> {borrower?.firstName} {borrower?.lastName}
               </li>
               <li>
-                <strong>Amount:</strong> $
-                {application.loanAmount?.toLocaleString() ?? "—"}
+                <strong>Vet clinic:</strong> {practiceName}
               </li>
               <li>
                 <strong>Service:</strong> {application.serviceType?.replace(/_/g, " ")}
@@ -734,20 +848,80 @@ export default function ApplyPage() {
                 {application.animalName ? ` (${application.animalName})` : ""}
               </li>
               <li>
-                <strong>Clinic:</strong> {practiceName}
-              </li>
-              <li>
                 <strong>Bank:</strong> Connected
               </li>
             </ul>
-            <button
-              type="button"
-              className="btn btn--primary"
-              disabled={submitting}
-              onClick={() => void handleFinalSubmit()}
-            >
-              {submitting ? "Submitting…" : "Submit application"}
-            </button>
+            <p className="apply-section-lead">
+              Before you submit, please read the federal Truth in Lending disclosure
+              for the plan you chose.{" "}
+              <button
+                type="button"
+                className="link-button"
+                onClick={() => setStep("plan")}
+              >
+                Change plan
+              </button>
+            </p>
+
+            {disclosure ? (
+              <>
+                <TruthInLendingDisclosure disclosure={disclosure} />
+                <form className="tila-sign" onSubmit={(e) => void handleFinalSubmit(e)}>
+                  <label className="tila-check">
+                    <input
+                      type="checkbox"
+                      checked={esignConsent}
+                      onChange={(e) => setEsignConsent(e.target.checked)}
+                    />
+                    <span>
+                      I agree to receive this disclosure and my loan documents
+                      electronically, and to sign them electronically.
+                    </span>
+                  </label>
+                  <FieldError message={fieldErrors.esignConsent} />
+                  <label className="tila-check">
+                    <input
+                      type="checkbox"
+                      checked={acknowledged}
+                      onChange={(e) => setAcknowledged(e.target.checked)}
+                    />
+                    <span>
+                      I have read and received a copy of this Truth in Lending
+                      disclosure and accept these loan terms.
+                    </span>
+                  </label>
+                  <FieldError message={fieldErrors.acknowledged} />
+                  <label className="portal-label">
+                    Type your full name to sign ({disclosure.borrower.name})
+                    <input
+                      name="signatureName"
+                      type="text"
+                      required
+                      autoComplete="name"
+                      value={signatureName}
+                      onChange={(e) => setSignatureName(e.target.value)}
+                    />
+                    <FieldError message={fieldErrors.signatureName} />
+                  </label>
+                  <div>
+                    <button
+                      type="submit"
+                      className="btn btn--primary"
+                      disabled={
+                        submitting ||
+                        !esignConsent ||
+                        !acknowledged ||
+                        !signatureName.trim()
+                      }
+                    >
+                      {submitting ? "Submitting…" : "Accept & submit application"}
+                    </button>
+                  </div>
+                </form>
+              </>
+            ) : (
+              <p className="portal-status">Preparing your disclosure…</p>
+            )}
           </div>
         )}
 
@@ -758,9 +932,25 @@ export default function ApplyPage() {
               Thank you! Your application with <strong>{practiceName}</strong>{" "}
               has been submitted. Reference: <code>{application.id}</code>
             </p>
-            <Link to="/" className="btn btn--secondary">
-              Back to VetFin
-            </Link>
+            {application.repaymentPlan?.originationFee ? (
+              <p className="portal-lead">
+                <strong>Next step:</strong> your{" "}
+                {formatUsdCents(application.repaymentPlan.originationFee)} origination
+                fee must be paid before your loan can be funded. We&apos;ll contact you
+                with payment instructions.
+              </p>
+            ) : null}
+            <div className="apply-bank-actions">
+              <Link to="/borrower/dashboard" className="btn btn--primary">
+                Go to My loans
+              </Link>
+              <Link
+                to={`/borrower/loans/${application.id}/disclosure`}
+                className="btn btn--secondary"
+              >
+                View your signed disclosure
+              </Link>
+            </div>
           </div>
         )}
       </div>

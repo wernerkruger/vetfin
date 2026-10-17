@@ -16,9 +16,9 @@ const applyBody = z.object({
 export function referralRouter(): Router {
   const router = Router();
 
-  router.get("/:slug", (req, res, next) => {
+  router.get("/:slug", async (req, res, next) => {
     try {
-      const practice = getPracticeBySlug(req.params.slug);
+      const practice = await getPracticeBySlug(req.params.slug);
       if (!practice) {
         res.status(404).json({ error: "Practice not found" });
         return;
@@ -39,16 +39,16 @@ export function referralRouter(): Router {
     }
   });
 
-  router.post("/:slug/apply", (req, res, next) => {
+  router.post("/:slug/apply", async (req, res, next) => {
     try {
-      const practice = getPracticeBySlug(req.params.slug);
+      const practice = await getPracticeBySlug(req.params.slug);
       if (!practice) {
         res.status(404).json({ error: "Practice not found" });
         return;
       }
 
       const body = applyBody.parse(req.body);
-      const applicant = createApplicantFromReferral({
+      const applicant = await createApplicantFromReferral({
         practiceId: practice.id,
         referralSlug: practice.slug,
         applicantName: body.applicantName,

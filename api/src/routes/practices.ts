@@ -45,10 +45,10 @@ const changePasswordBody = z.object({
 export function practicesRouter(): Router {
   const router = Router();
 
-  router.get("/prospect-clinics/search", (req, res, next) => {
+  router.get("/prospect-clinics/search", async (req, res, next) => {
     try {
       const q = typeof req.query.q === "string" ? req.query.q : "";
-      const clinics = searchProspectClinics(q, 10);
+      const clinics = await searchProspectClinics(q, 10);
       res.json({ clinics });
     } catch (err) {
       next(err);
@@ -97,25 +97,29 @@ export function practicesRouter(): Router {
     }
   });
 
-  router.post("/me/change-password", requirePracticeAuth, async (req, res, next) => {
-    try {
-      const practiceId = getPracticeAuth(req).sub;
-      const body = changePasswordBody.parse(req.body);
-      const practice = await changePracticePassword(
-        practiceId,
-        body.currentPassword,
-        body.newPassword,
-      );
-      res.json({ practice: toPublicPractice(practice) });
-    } catch (err) {
-      next(err);
-    }
-  });
+  router.post(
+    "/me/change-password",
+    requirePracticeAuth,
+    async (req, res, next) => {
+      try {
+        const practiceId = getPracticeAuth(req).sub;
+        const body = changePasswordBody.parse(req.body);
+        const practice = await changePracticePassword(
+          practiceId,
+          body.currentPassword,
+          body.newPassword,
+        );
+        res.json({ practice: toPublicPractice(practice) });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
 
-  router.get("/me", requirePracticeAuth, (req, res, next) => {
+  router.get("/me", requirePracticeAuth, async (req, res, next) => {
     try {
       const practiceId = getPracticeAuth(req).sub;
-      const practice = getPracticeById(practiceId);
+      const practice = await getPracticeById(practiceId);
       if (!practice) {
         res.status(404).json({ error: "Practice not found" });
         return;
@@ -124,19 +128,19 @@ export function practicesRouter(): Router {
       res.json({
         practice: toPublicPractice(practice),
         referralUrl: buildReferralUrl(practice.slug, req),
-        stats: getPracticeStats(practice.id),
+        stats: await getPracticeStats(practice.id),
       });
     } catch (err) {
       next(err);
     }
   });
 
-  router.get("/me/referrals", requirePracticeAuth, (req, res, next) => {
+  router.get("/me/referrals", requirePracticeAuth, async (req, res, next) => {
     try {
       const practiceId = getPracticeAuth(req).sub;
       res.json({
-        referrals: getPracticeReferrals(practiceId),
-        stats: getPracticeStats(practiceId),
+        referrals: await getPracticeReferrals(practiceId),
+        stats: await getPracticeStats(practiceId),
       });
     } catch (err) {
       next(err);
@@ -146,7 +150,7 @@ export function practicesRouter(): Router {
   router.get("/me/qr", requirePracticeAuth, async (req, res, next) => {
     try {
       const practiceId = getPracticeAuth(req).sub;
-      const practice = getPracticeById(practiceId);
+      const practice = await getPracticeById(practiceId);
       if (!practice) {
         res.status(404).json({ error: "Practice not found" });
         return;
@@ -175,10 +179,10 @@ export function practicesRouter(): Router {
   router.post(
     "/me/applications/:applicationId/vet-approve",
     requirePracticeAuth,
-    (req, res, next) => {
+    async (req, res, next) => {
       try {
         const practiceId = getPracticeAuth(req).sub;
-        const application = setVetApproval(
+        const application = await setVetApproval(
           applicationIdParam(req.params.applicationId),
           practiceId,
           true,
@@ -193,10 +197,10 @@ export function practicesRouter(): Router {
   router.post(
     "/me/applications/:applicationId/vet-cancel",
     requirePracticeAuth,
-    (req, res, next) => {
+    async (req, res, next) => {
       try {
         const practiceId = getPracticeAuth(req).sub;
-        const application = setVetApproval(
+        const application = await setVetApproval(
           applicationIdParam(req.params.applicationId),
           practiceId,
           false,
@@ -211,7 +215,7 @@ export function practicesRouter(): Router {
   router.get("/me/qr-data", requirePracticeAuth, async (req, res, next) => {
     try {
       const practiceId = getPracticeAuth(req).sub;
-      const practice = getPracticeById(practiceId);
+      const practice = await getPracticeById(practiceId);
       if (!practice) {
         res.status(404).json({ error: "Practice not found" });
         return;

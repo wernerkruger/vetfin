@@ -40,7 +40,7 @@ API base: `http://localhost:3001`
 
 ## Customer data storage
 
-Applicant and Plaid data are stored in **SQLite** (default: `api/data/vetfin.sqlite`).
+Applicant and Plaid data are stored in **PostgreSQL** (connection from `DATABASE_URL` or the `DB_*` settings; see `.env.example`). The schema is in `src/db/schema.sql` and is applied automatically on startup; add later schema changes to `src/db/migrate.ts`.
 
 | Table | Contents |
 |-------|----------|

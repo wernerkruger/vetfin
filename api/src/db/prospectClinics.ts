@@ -2,7 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { HttpError } from "../errors.js";
-import { getDb } from "./connection.js";
+import {
+  execute,
+  getDb,
+  queryOne,
+  withTransaction,
+  type SqlParam,
+} from "./connection.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -91,70 +97,78 @@ function emptyToNull(value: string | undefined): string | null {
   return trimmed ? trimmed : null;
 }
 
-export function importProspectClinicsIfEmpty(): number {
-  const database = getDb();
-  const existing = database
-    .prepare("SELECT COUNT(*) AS n FROM prospect_clinics")
-    .get() as { n: number };
+export async function importProspectClinicsIfEmpty(): Promise<number> {
+  const existing = (await queryOne<{ n: number }>(
+    "SELECT COUNT(*) AS n FROM prospect_clinics",
+  )) ?? { n: 0 };
   if ((existing.n ?? 0) > 0) return 0;
 
   const csv = fs.readFileSync(clinicsCsvPath(), "utf8");
   const lines = csv.split(/\r?\n/).filter((line) => line.trim().length > 0);
   if (lines.length < 2) return 0;
 
-  const insert = database.prepare(
-    `INSERT INTO prospect_clinics (
-      id, category, name, address, city, state, state_short,
-      phone, website, rating, source_url, email
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  );
+  const records: SqlParam[][] = [];
+  for (const row of lines.slice(1).map(parseCsvLine)) {
+    if (row.length < 12) continue;
+    const [
+      category,
+      name,
+      address,
+      city,
+      state,
+      stateShort,
+      phone,
+      website,
+      rating,
+      bid,
+      sourceUrl,
+      email,
+    ] = row;
+    if (!bid?.trim() || !name?.trim()) continue;
+    records.push([
+      bid.trim(),
+      emptyToNull(category),
+      name.trim(),
+      emptyToNull(address),
+      emptyToNull(city),
+      emptyToNull(state),
+      emptyToNull(stateShort),
+      emptyToNull(phone),
+      emptyToNull(website),
+      rating?.trim() ? Number(rating) : null,
+      emptyToNull(sourceUrl),
+      emptyToNull(email),
+    ]);
+  }
 
-  const importMany = database.transaction((rows: string[][]) => {
-    for (const row of rows) {
-      if (row.length < 12) continue;
-      const [
-        category,
-        name,
-        address,
-        city,
-        state,
-        stateShort,
-        phone,
-        website,
-        rating,
-        bid,
-        sourceUrl,
-        email,
-      ] = row;
-      if (!bid?.trim() || !name?.trim()) continue;
-
-      insert.run(
-        bid.trim(),
-        emptyToNull(category),
-        name.trim(),
-        emptyToNull(address),
-        emptyToNull(city),
-        emptyToNull(state),
-        emptyToNull(stateShort),
-        emptyToNull(phone),
-        emptyToNull(website),
-        rating?.trim() ? Number(rating) : null,
-        emptyToNull(sourceUrl),
-        emptyToNull(email),
+  // Multi-row INSERTs in batches — one round trip per batch instead of per clinic.
+  const columns = 12;
+  const batchSize = 500;
+  await withTransaction(async () => {
+    for (let i = 0; i < records.length; i += batchSize) {
+      const batch = records.slice(i, i + batchSize);
+      const values = batch
+        .map(() => `(${Array(columns).fill("?").join(", ")})`)
+        .join(",\n");
+      await execute(
+        `INSERT INTO prospect_clinics (
+          id, category, name, address, city, state, state_short,
+          phone, website, rating, source_url, email
+        ) VALUES ${values}
+        ON CONFLICT (id) DO NOTHING`,
+        batch.flat(),
       );
     }
   });
 
-  const dataRows = lines.slice(1).map(parseCsvLine);
-  importMany(dataRows);
-  syncSignedUpFromPractices();
-  return dataRows.length;
+  await syncSignedUpFromPractices();
+  return lines.length - 1;
 }
 
-export function syncSignedUpFromPractices(): void {
+export async function syncSignedUpFromPractices(): Promise<void> {
   const database = getDb();
 
-  database.exec(`
+  await database.exec(`
     UPDATE prospect_clinics
     SET signed_up = 1,
         practice_id = (
@@ -163,14 +177,14 @@ export function syncSignedUpFromPractices(): void {
           WHERE vp.prospect_clinic_id = prospect_clinics.id
           LIMIT 1
         ),
-        updated_at = datetime('now')
+        updated_at = now_text()
     WHERE id IN (
       SELECT prospect_clinic_id FROM vet_practices
       WHERE prospect_clinic_id IS NOT NULL
     )
   `);
 
-  database.exec(`
+  await database.exec(`
     UPDATE prospect_clinics
     SET signed_up = 1,
         practice_id = (
@@ -180,7 +194,7 @@ export function syncSignedUpFromPractices(): void {
             AND vp.prospect_clinic_id IS NULL
           LIMIT 1
         ),
-        updated_at = datetime('now')
+        updated_at = now_text()
     WHERE signed_up = 0
       AND EXISTS (
         SELECT 1
@@ -211,37 +225,45 @@ export function toPublicProspectClinic(row: ProspectClinicRow) {
   };
 }
 
-export function searchProspectClinics(query: string, limit = 10) {
+export async function searchProspectClinics(query: string, limit = 10) {
   const q = query.trim();
   if (q.length < 2) return [];
 
-  const rows = getDb()
+  const rows = (await getDb()
     .prepare(
       `SELECT *
        FROM prospect_clinics
        WHERE signed_up = 0
          AND LOWER(name) LIKE ?
-       ORDER BY name
+       ORDER BY name, id
        LIMIT ?`,
     )
-    .all(`${q.toLowerCase()}%`, limit) as ProspectClinicRow[];
+    .all(`${q.toLowerCase()}%`, limit)) as ProspectClinicRow[];
 
   return rows.map(toPublicProspectClinic);
 }
 
-export function getProspectClinicById(id: string): ProspectClinicRow | undefined {
-  return getDb()
+export async function getProspectClinicById(
+  id: string,
+): Promise<ProspectClinicRow | undefined> {
+  return (await getDb()
     .prepare("SELECT * FROM prospect_clinics WHERE id = ?")
-    .get(id) as ProspectClinicRow | undefined;
+    .get(id)) as ProspectClinicRow | undefined;
 }
 
-function likeFilter(column: string, value: string | undefined): {
+function likeFilter(
+  column: string,
+  value: string | undefined,
+): {
   clause: string;
   param: string;
 } | null {
   const trimmed = value?.trim();
   if (!trimmed) return null;
-  return { clause: `LOWER(${column}) LIKE '%' || LOWER(?) || '%'`, param: trimmed };
+  return {
+    clause: `LOWER(${column}) LIKE '%' || LOWER(?::text) || '%'`,
+    param: trimmed,
+  };
 }
 
 function buildProspectClinicWhere(filters: ProspectClinicFilters): {
@@ -288,26 +310,26 @@ function buildProspectClinicWhere(filters: ProspectClinicFilters): {
   };
 }
 
-export function listAdminProspectClinics(filters: ProspectClinicFilters) {
+export async function listAdminProspectClinics(filters: ProspectClinicFilters) {
   const page = Math.max(1, filters.page ?? 1);
   const limit = Math.min(100, Math.max(1, filters.limit ?? 50));
   const offset = (page - 1) * limit;
   const { whereSql, params } = buildProspectClinicWhere(filters);
 
   const database = getDb();
-  const totalRow = database
+  const totalRow = (await database
     .prepare(`SELECT COUNT(*) AS n FROM prospect_clinics ${whereSql}`)
-    .get(...params) as { n: number };
+    .get(...params)) as { n: number };
 
-  const rows = database
+  const rows = (await database
     .prepare(
       `SELECT *
        FROM prospect_clinics
        ${whereSql}
-       ORDER BY name
+       ORDER BY name, id
        LIMIT ? OFFSET ?`,
     )
-    .all(...params, limit, offset) as ProspectClinicRow[];
+    .all(...params, limit, offset)) as ProspectClinicRow[];
 
   return {
     clinics: rows.map(toPublicProspectClinic),
@@ -320,15 +342,15 @@ export function listAdminProspectClinics(filters: ProspectClinicFilters) {
 
 const EXPORT_ROW_LIMIT = 100_000;
 
-export function exportAdminProspectClinics(
+export async function exportAdminProspectClinics(
   filters: Omit<ProspectClinicFilters, "page" | "limit">,
 ) {
   const { whereSql, params } = buildProspectClinicWhere(filters);
   const database = getDb();
 
-  const totalRow = database
+  const totalRow = (await database
     .prepare(`SELECT COUNT(*) AS n FROM prospect_clinics ${whereSql}`)
-    .get(...params) as { n: number };
+    .get(...params)) as { n: number };
 
   const total = totalRow.n ?? 0;
   if (total > EXPORT_ROW_LIMIT) {
@@ -338,15 +360,15 @@ export function exportAdminProspectClinics(
     );
   }
 
-  const rows = database
+  const rows = (await database
     .prepare(
       `SELECT *
        FROM prospect_clinics
        ${whereSql}
-       ORDER BY name
+       ORDER BY name, id
        LIMIT ?`,
     )
-    .all(...params, EXPORT_ROW_LIMIT) as ProspectClinicRow[];
+    .all(...params, EXPORT_ROW_LIMIT)) as ProspectClinicRow[];
 
   return {
     clinics: rows.map(toPublicProspectClinic),
@@ -354,12 +376,12 @@ export function exportAdminProspectClinics(
   };
 }
 
-export function linkProspectClinicToPractice(
+export async function linkProspectClinicToPractice(
   clinicId: string,
   practiceId: string,
-): void {
+): Promise<void> {
   const database = getDb();
-  const clinic = getProspectClinicById(clinicId);
+  const clinic = await getProspectClinicById(clinicId);
   if (!clinic) {
     throw new HttpError(404, "Clinic not found in prospect list");
   }
@@ -367,18 +389,18 @@ export function linkProspectClinicToPractice(
     throw new HttpError(409, "This clinic is already registered on VetFin");
   }
 
-  database
+  await database
     .prepare(
       `UPDATE prospect_clinics
-       SET signed_up = 1, practice_id = ?, updated_at = datetime('now')
+       SET signed_up = 1, practice_id = ?, updated_at = now_text()
        WHERE id = ?`,
     )
     .run(practiceId, clinicId);
 
-  database
+  await database
     .prepare(
       `UPDATE vet_practices
-       SET prospect_clinic_id = ?, updated_at = datetime('now')
+       SET prospect_clinic_id = ?, updated_at = now_text()
        WHERE id = ?`,
     )
     .run(clinicId, practiceId);

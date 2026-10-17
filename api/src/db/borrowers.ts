@@ -37,16 +37,20 @@ export type BorrowerRow = {
   updated_at: string;
 };
 
-export function getBorrowerById(id: string): BorrowerRow | undefined {
-  return getDb()
+export async function getBorrowerById(
+  id: string,
+): Promise<BorrowerRow | undefined> {
+  return (await getDb()
     .prepare("SELECT * FROM customers WHERE id = ?")
-    .get(id) as BorrowerRow | undefined;
+    .get(id)) as BorrowerRow | undefined;
 }
 
-export function getBorrowerByEmail(email: string): BorrowerRow | undefined {
-  return getDb()
-    .prepare("SELECT * FROM customers WHERE email = ? COLLATE NOCASE")
-    .get(email.trim().toLowerCase()) as BorrowerRow | undefined;
+export async function getBorrowerByEmail(
+  email: string,
+): Promise<BorrowerRow | undefined> {
+  return (await getDb()
+    .prepare("SELECT * FROM customers WHERE LOWER(email) = ?")
+    .get(email.trim().toLowerCase())) as BorrowerRow | undefined;
 }
 
 export function toPublicBorrower(row: BorrowerRow) {
@@ -80,7 +84,7 @@ export async function registerBorrower(input: {
   practiceId: string;
   referralSlug: string;
 }): Promise<{ borrower: BorrowerRow; token: string }> {
-  const existing = getBorrowerByEmail(input.email);
+  const existing = await getBorrowerByEmail(input.email);
   if (existing?.password_hash) {
     const error = new Error("An account with this email already exists");
     (error as Error & { status: number }).status = 409;
@@ -94,12 +98,12 @@ export async function registerBorrower(input: {
   const applicantName = `${input.firstName.trim()} ${input.lastName.trim()}`;
 
   if (existing) {
-    database
+    await database
       .prepare(
         `UPDATE customers SET
           password_hash = ?, first_name = ?, last_name = ?, applicant_name = ?,
           practice_id = ?, referral_slug = ?, client_user_id = ?,
-          updated_at = datetime('now')
+          updated_at = now_text()
          WHERE id = ?`,
       )
       .run(
@@ -112,7 +116,7 @@ export async function registerBorrower(input: {
         clientUserId,
         existing.id,
       );
-    const borrower = getBorrowerById(existing.id)!;
+    const borrower = (await getBorrowerById(existing.id))!;
     const token = await signBorrowerToken({
       sub: borrower.id,
       email: borrower.email ?? email,
@@ -121,7 +125,7 @@ export async function registerBorrower(input: {
   }
 
   const id = randomUUID();
-  database
+  await database
     .prepare(
       `INSERT INTO customers (
         id, client_user_id, email, password_hash,
@@ -141,7 +145,7 @@ export async function registerBorrower(input: {
       input.referralSlug,
     );
 
-  const borrower = getBorrowerById(id)!;
+  const borrower = (await getBorrowerById(id))!;
   const token = await signBorrowerToken({
     sub: borrower.id,
     email,
@@ -152,8 +156,12 @@ export async function registerBorrower(input: {
 export async function loginBorrower(
   email: string,
   password: string,
-): Promise<{ borrower: BorrowerRow; token: string; mustChangePassword: boolean }> {
-  const borrower = getBorrowerByEmail(email);
+): Promise<{
+  borrower: BorrowerRow;
+  token: string;
+  mustChangePassword: boolean;
+}> {
+  const borrower = await getBorrowerByEmail(email);
   if (!borrower?.password_hash) {
     throw new HttpError(401, INVALID_CREDENTIALS_MESSAGE);
   }
@@ -162,11 +170,15 @@ export async function loginBorrower(
 
   const valid = await verifyPassword(password, borrower.password_hash);
   if (!valid) {
-    recordFailedLogin("customers", borrower.id, borrower.failed_login_attempts);
+    await recordFailedLogin(
+      "customers",
+      borrower.id,
+      borrower.failed_login_attempts,
+    );
   }
 
-  clearLoginAttempts("customers", borrower.id);
-  const refreshed = getBorrowerById(borrower.id)!;
+  await clearLoginAttempts("customers", borrower.id);
+  const refreshed = (await getBorrowerById(borrower.id))!;
   const token = await signBorrowerToken({
     sub: refreshed.id,
     email: refreshed.email ?? email,
@@ -183,7 +195,7 @@ export async function changeBorrowerPassword(
   currentPassword: string,
   newPassword: string,
 ): Promise<BorrowerRow> {
-  const borrower = getBorrowerById(customerId);
+  const borrower = await getBorrowerById(customerId);
   if (!borrower?.password_hash) {
     throw new HttpError(404, "Account not found");
   }
@@ -194,20 +206,20 @@ export async function changeBorrowerPassword(
   }
 
   const passwordHash = await hashPassword(newPassword);
-  getDb()
+  await getDb()
     .prepare(
       `UPDATE customers SET
         password_hash = ?, must_change_password = 0,
         failed_login_attempts = 0, locked_at = NULL,
-        updated_at = datetime('now')
+        updated_at = now_text()
        WHERE id = ?`,
     )
     .run(passwordHash, customerId);
 
-  return getBorrowerById(customerId)!;
+  return (await getBorrowerById(customerId))!;
 }
 
-export function updateBorrowerProfile(
+export async function updateBorrowerProfile(
   customerId: string,
   input: {
     firstName: string;
@@ -221,15 +233,15 @@ export function updateBorrowerProfile(
     state: string;
     zip: string;
   },
-): BorrowerRow {
+): Promise<BorrowerRow> {
   const applicantName = `${input.firstName.trim()} ${input.lastName.trim()}`;
-  getDb()
+  await getDb()
     .prepare(
       `UPDATE customers SET
         first_name = ?, last_name = ?, applicant_name = ?,
         phone = ?, date_of_birth = ?, ssn_last4 = ?,
         address_line1 = ?, address_line2 = ?, city = ?, state = ?, zip = ?,
-        updated_at = datetime('now')
+        updated_at = now_text()
        WHERE id = ?`,
     )
     .run(
@@ -247,5 +259,5 @@ export function updateBorrowerProfile(
       customerId,
     );
 
-  return getBorrowerById(customerId)!;
+  return (await getBorrowerById(customerId))!;
 }

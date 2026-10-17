@@ -265,7 +265,7 @@ export default function PlaidTestPage() {
         </p>
         {customerId ? (
           <p className="plaid-test-meta">
-            Customer ID: <code>{customerId}</code> (saved in SQLite)
+            Customer ID: <code>{customerId}</code> (saved in the database)
           </p>
         ) : null}
       </header>
@@ -324,7 +324,7 @@ export default function PlaidTestPage() {
         <section className="plaid-test-card plaid-test-card--help">
           <h2>Where data is stored</h2>
           <p>
-            SQLite file on the API server (<code>api/data/vetfin.sqlite</code>):
+            PostgreSQL database used by the API:
           </p>
           <ul className="plaid-test-storage-list">
             <li>
@@ -412,7 +412,7 @@ export default function PlaidTestPage() {
 
       {step === "pulling" ? (
         <p className="plaid-test-status plaid-test-status--block">
-          Pulling from Plaid and writing to SQLite…
+          Pulling from Plaid and writing to the database…
         </p>
       ) : null}
 

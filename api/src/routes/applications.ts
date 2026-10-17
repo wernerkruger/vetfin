@@ -7,12 +7,17 @@ import {
   getApplicationForBorrower,
   getOrCreateDraftApplication,
   markApplicationBankLinked,
-  submitApplication,
   toPublicApplication,
   updateApplicationLoanDetails,
   updateApplicationProfile,
 } from "../db/applications.js";
 import { getBorrowerById } from "../db/borrowers.js";
+import {
+  acceptDisclosureAndSubmit,
+  getRepaymentOptions,
+  getTilaDisclosure,
+  selectRepaymentPlan,
+} from "../db/repayment.js";
 import { getPracticeBySlug, toPublicPractice } from "../db/practices.js";
 import {
   applyTransactionSync,
@@ -23,7 +28,10 @@ import {
   savePlaidItem,
 } from "../db/store.js";
 import { syncTransactions } from "../plaid/client.js";
-import { getBorrowerAuth, requireBorrowerAuth } from "../middleware/requireBorrower.js";
+import {
+  getBorrowerAuth,
+  requireBorrowerAuth,
+} from "../middleware/requireBorrower.js";
 import { getConfig } from "../config.js";
 import {
   createLinkToken,
@@ -33,6 +41,23 @@ import {
   listAccounts,
   SANDBOX_INSTITUTION_ID,
 } from "../plaid/client.js";
+
+const repaymentPlanBody = z.object({
+  termMonths: z.number().int(),
+});
+
+const submitBody = z.object({
+  fingerprint: z.string().min(1),
+  signatureName: z.string().trim().min(1, "Type your full name to sign"),
+  esignConsent: z.literal(true, {
+    errorMap: () => ({ message: "Please agree to sign electronically" }),
+  }),
+  acknowledged: z.literal(true, {
+    errorMap: () => ({
+      message: "Please confirm you have read the disclosure",
+    }),
+  }),
+});
 
 const referralSlugQuery = z.object({
   referralSlug: z.string().min(1),
@@ -63,17 +88,17 @@ export function applicationsRouter(plaid: PlaidApi): Router {
   const router = Router();
   const config = getConfig();
 
-  router.get("/current", requireBorrowerAuth, (req, res, next) => {
+  router.get("/current", requireBorrowerAuth, async (req, res, next) => {
     try {
       const customerId = getBorrowerAuth(req).sub;
       const { referralSlug } = referralSlugQuery.parse(req.query);
-      const practice = getPracticeBySlug(referralSlug);
+      const practice = await getPracticeBySlug(referralSlug);
       if (!practice) {
         res.status(404).json({ error: "Practice not found" });
         return;
       }
 
-      const application = getOrCreateDraftApplication(
+      const application = await getOrCreateDraftApplication(
         customerId,
         practice.id,
         practice.slug,
@@ -82,112 +107,141 @@ export function applicationsRouter(plaid: PlaidApi): Router {
       res.json({
         application: toPublicApplication(application),
         practice: { id: practice.id, name: practice.name, slug: practice.slug },
-        profile: toPublicBorrowerSafe(getBorrowerById(customerId)!),
+        profile: toPublicBorrowerSafe(await getBorrowerById(customerId)),
       });
     } catch (err) {
       next(err);
     }
   });
 
-  router.post("/:applicationId/complete-profile", requireBorrowerAuth, (req, res, next) => {
-    try {
-      const customerId = getBorrowerAuth(req).sub;
-      const application = updateApplicationProfile(
-        paramId(req.params.applicationId),
-        customerId,
-      );
-      res.json({ application: toPublicApplication(application) });
-    } catch (err) {
-      next(err);
-    }
-  });
-
-  router.patch("/:applicationId/loan", requireBorrowerAuth, (req, res, next) => {
-    try {
-      const customerId = getBorrowerAuth(req).sub;
-      const body = loanBody.parse(req.body);
-      const application = updateApplicationLoanDetails(
-        paramId(req.params.applicationId),
-        customerId,
-        body,
-      );
-      res.json({ application: toPublicApplication(application) });
-    } catch (err) {
-      next(err);
-    }
-  });
-
-  router.post("/:applicationId/plaid/link-token", requireBorrowerAuth, async (req, res, next) => {
-    try {
-      const customerId = getBorrowerAuth(req).sub;
-      const app = getApplicationForBorrower(paramId(req.params.applicationId), customerId);
-      if (!app) {
-        res.status(404).json({ error: "Application not found" });
-        return;
+  router.post(
+    "/:applicationId/complete-profile",
+    requireBorrowerAuth,
+    async (req, res, next) => {
+      try {
+        const customerId = getBorrowerAuth(req).sub;
+        const application = await updateApplicationProfile(
+          paramId(req.params.applicationId),
+          customerId,
+        );
+        res.json({ application: toPublicApplication(application) });
+      } catch (err) {
+        next(err);
       }
+    },
+  );
 
-      const existingItem = getLatestPlaidItemForCustomer(customerId);
-      const linkToken = await createLinkToken(plaid, {
-        clientUserId: customerId,
-        accessToken: existingItem?.access_token_plain,
-      });
-      res.json({ linkToken, customerId });
-    } catch (err) {
-      next(err);
-    }
-  });
-
-  router.post("/:applicationId/plaid/exchange", requireBorrowerAuth, async (req, res, next) => {
-    try {
-      const customerId = getBorrowerAuth(req).sub;
-      const app = getApplicationForBorrower(paramId(req.params.applicationId), customerId);
-      if (!app) {
-        res.status(404).json({ error: "Application not found" });
-        return;
+  router.patch(
+    "/:applicationId/loan",
+    requireBorrowerAuth,
+    async (req, res, next) => {
+      try {
+        const customerId = getBorrowerAuth(req).sub;
+        const body = loanBody.parse(req.body);
+        const application = await updateApplicationLoanDetails(
+          paramId(req.params.applicationId),
+          customerId,
+          body,
+        );
+        res.json({ application: toPublicApplication(application) });
+      } catch (err) {
+        next(err);
       }
+    },
+  );
 
-      const body = exchangeBody.parse(req.body);
-      const tokens = await exchangePublicToken(plaid, body.publicToken);
-      const plaidItem = savePlaidItem({
-        customerId,
-        itemId: tokens.itemId,
-        accessToken: tokens.accessToken,
-        institutionId: body.institutionId ?? null,
-        institutionName: body.institutionName ?? null,
-      });
+  router.post(
+    "/:applicationId/plaid/link-token",
+    requireBorrowerAuth,
+    async (req, res, next) => {
+      try {
+        const customerId = getBorrowerAuth(req).sub;
+        const app = await getApplicationForBorrower(
+          paramId(req.params.applicationId),
+          customerId,
+        );
+        if (!app) {
+          res.status(404).json({ error: "Application not found" });
+          return;
+        }
 
-      const accounts = await listAccounts(plaid, tokens.accessToken);
-      res.json({
-        plaidItemId: plaidItem.id,
-        itemId: tokens.itemId,
-        accounts,
-      });
-    } catch (err) {
-      next(err);
-    }
-  });
-
-  router.get("/:applicationId/plaid/accounts", requireBorrowerAuth, async (req, res, next) => {
-    try {
-      const customerId = getBorrowerAuth(req).sub;
-      const app = getApplicationForBorrower(paramId(req.params.applicationId), customerId);
-      if (!app) {
-        res.status(404).json({ error: "Application not found" });
-        return;
+        const existingItem = await getLatestPlaidItemForCustomer(customerId);
+        const linkToken = await createLinkToken(plaid, {
+          clientUserId: customerId,
+          accessToken: existingItem?.access_token_plain,
+        });
+        res.json({ linkToken, customerId });
+      } catch (err) {
+        next(err);
       }
+    },
+  );
 
-      const item = getLatestPlaidItemForCustomer(customerId);
-      if (!item) {
-        res.status(404).json({ error: "Connect a bank first" });
-        return;
+  router.post(
+    "/:applicationId/plaid/exchange",
+    requireBorrowerAuth,
+    async (req, res, next) => {
+      try {
+        const customerId = getBorrowerAuth(req).sub;
+        const app = await getApplicationForBorrower(
+          paramId(req.params.applicationId),
+          customerId,
+        );
+        if (!app) {
+          res.status(404).json({ error: "Application not found" });
+          return;
+        }
+
+        const body = exchangeBody.parse(req.body);
+        const tokens = await exchangePublicToken(plaid, body.publicToken);
+        const plaidItem = await savePlaidItem({
+          customerId,
+          itemId: tokens.itemId,
+          accessToken: tokens.accessToken,
+          institutionId: body.institutionId ?? null,
+          institutionName: body.institutionName ?? null,
+        });
+
+        const accounts = await listAccounts(plaid, tokens.accessToken);
+        res.json({
+          plaidItemId: plaidItem.id,
+          itemId: tokens.itemId,
+          accounts,
+        });
+      } catch (err) {
+        next(err);
       }
+    },
+  );
 
-      const accounts = await listAccounts(plaid, item.access_token_plain);
-      res.json({ accounts, itemId: item.item_id });
-    } catch (err) {
-      next(err);
-    }
-  });
+  router.get(
+    "/:applicationId/plaid/accounts",
+    requireBorrowerAuth,
+    async (req, res, next) => {
+      try {
+        const customerId = getBorrowerAuth(req).sub;
+        const app = await getApplicationForBorrower(
+          paramId(req.params.applicationId),
+          customerId,
+        );
+        if (!app) {
+          res.status(404).json({ error: "Application not found" });
+          return;
+        }
+
+        const item = await getLatestPlaidItemForCustomer(customerId);
+        if (!item) {
+          res.status(404).json({ error: "Connect a bank first" });
+          return;
+        }
+
+        const accounts = await listAccounts(plaid, item.access_token_plain);
+        res.json({ accounts, itemId: item.item_id });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
 
   router.post(
     "/:applicationId/plaid/linked-accounts",
@@ -195,14 +249,17 @@ export function applicationsRouter(plaid: PlaidApi): Router {
     async (req, res, next) => {
       try {
         const customerId = getBorrowerAuth(req).sub;
-        const app = getApplicationForBorrower(paramId(req.params.applicationId), customerId);
+        const app = await getApplicationForBorrower(
+          paramId(req.params.applicationId),
+          customerId,
+        );
         if (!app) {
           res.status(404).json({ error: "Application not found" });
           return;
         }
 
         const { accountIds } = linkedAccountsBody.parse(req.body);
-        const item = getLatestPlaidItemForCustomer(customerId);
+        const item = await getLatestPlaidItemForCustomer(customerId);
         if (!item) {
           res.status(404).json({ error: "Connect a bank first" });
           return;
@@ -214,7 +271,7 @@ export function applicationsRouter(plaid: PlaidApi): Router {
           item.access_token_plain,
           accountIds,
         );
-        saveLinkedBankAccounts({
+        await saveLinkedBankAccounts({
           customerId,
           plaidItemId: item.id,
           loanApplicationId: applicationId,
@@ -226,13 +283,13 @@ export function applicationsRouter(plaid: PlaidApi): Router {
           | { error: string } = { added: 0, modified: 0, removed: 0 };
 
         try {
-          const cursor = getTransactionsCursor(item.id);
+          const cursor = await getTransactionsCursor(item.id);
           const sync = await syncTransactions(
             plaid,
             item.access_token_plain,
             cursor,
           );
-          transactionSync = applyTransactionSync(
+          transactionSync = await applyTransactionSync(
             customerId,
             item.id,
             accountIds,
@@ -247,7 +304,7 @@ export function applicationsRouter(plaid: PlaidApi): Router {
           transactionSync = { error: message };
         }
 
-        const application = markApplicationBankLinked(
+        const application = await markApplicationBankLinked(
           applicationId,
           customerId,
         );
@@ -256,7 +313,7 @@ export function applicationsRouter(plaid: PlaidApi): Router {
           application: toPublicApplication(application),
           accounts: data.accounts,
           transactionSync,
-          stored: getCustomerProfile(customerId),
+          stored: await getCustomerProfile(customerId),
         });
       } catch (err) {
         next(err);
@@ -275,7 +332,10 @@ export function applicationsRouter(plaid: PlaidApi): Router {
 
       try {
         const customerId = getBorrowerAuth(req).sub;
-        const app = getApplicationForBorrower(paramId(req.params.applicationId), customerId);
+        const app = await getApplicationForBorrower(
+          paramId(req.params.applicationId),
+          customerId,
+        );
         if (!app) {
           res.status(404).json({ error: "Application not found" });
           return;
@@ -283,7 +343,7 @@ export function applicationsRouter(plaid: PlaidApi): Router {
 
         const publicToken = await createSandboxPublicToken(plaid);
         const tokens = await exchangePublicToken(plaid, publicToken);
-        savePlaidItem({
+        await savePlaidItem({
           customerId,
           itemId: tokens.itemId,
           accessToken: tokens.accessToken,
@@ -299,38 +359,113 @@ export function applicationsRouter(plaid: PlaidApi): Router {
     },
   );
 
-  router.post("/:applicationId/submit", requireBorrowerAuth, (req, res, next) => {
-    try {
-      const customerId = getBorrowerAuth(req).sub;
-      const application = submitApplication(paramId(req.params.applicationId), customerId);
-      const practice = getPracticeBySlug(application.referral_slug);
+  router.get(
+    "/:applicationId/repayment-options",
+    requireBorrowerAuth,
+    async (req, res, next) => {
+      try {
+        const customerId = getBorrowerAuth(req).sub;
+        res.json(
+          await getRepaymentOptions(
+            paramId(req.params.applicationId),
+            customerId,
+          ),
+        );
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
 
-      res.json({
-        application: toPublicApplication(application),
-        practice: practice ? toPublicPractice(practice) : null,
-      });
-    } catch (err) {
-      next(err);
-    }
-  });
+  router.post(
+    "/:applicationId/repayment-plan",
+    requireBorrowerAuth,
+    async (req, res, next) => {
+      try {
+        const customerId = getBorrowerAuth(req).sub;
+        const { termMonths } = repaymentPlanBody.parse(req.body);
+        const application = await selectRepaymentPlan(
+          paramId(req.params.applicationId),
+          customerId,
+          termMonths,
+        );
+        res.json({ application: toPublicApplication(application) });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
 
-  router.post("/:applicationId/cancel", requireBorrowerAuth, (req, res, next) => {
-    try {
-      const customerId = getBorrowerAuth(req).sub;
-      const application = cancelApplicationSubmission(
-        paramId(req.params.applicationId),
-        customerId,
-      );
-      res.json({ application: toPublicApplication(application) });
-    } catch (err) {
-      next(err);
-    }
-  });
+  router.get(
+    "/:applicationId/disclosure",
+    requireBorrowerAuth,
+    async (req, res, next) => {
+      try {
+        const customerId = getBorrowerAuth(req).sub;
+        res.json({
+          disclosure: await getTilaDisclosure(
+            paramId(req.params.applicationId),
+            customerId,
+          ),
+        });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  /** Accept the Truth in Lending disclosure (e-sign) and submit the application. */
+  router.post(
+    "/:applicationId/submit",
+    requireBorrowerAuth,
+    async (req, res, next) => {
+      try {
+        const customerId = getBorrowerAuth(req).sub;
+        const body = submitBody.parse(req.body);
+        const application = await acceptDisclosureAndSubmit(
+          paramId(req.params.applicationId),
+          customerId,
+          {
+            ...body,
+            ipAddress: req.ip ?? null,
+            userAgent: req.get("user-agent") ?? null,
+          },
+        );
+        const practice = await getPracticeBySlug(application.referral_slug);
+
+        res.json({
+          application: toPublicApplication(application),
+          practice: practice ? toPublicPractice(practice) : null,
+        });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  router.post(
+    "/:applicationId/cancel",
+    requireBorrowerAuth,
+    async (req, res, next) => {
+      try {
+        const customerId = getBorrowerAuth(req).sub;
+        const application = await cancelApplicationSubmission(
+          paramId(req.params.applicationId),
+          customerId,
+        );
+        res.json({ application: toPublicApplication(application) });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
 
   return router;
 }
 
-function toPublicBorrowerSafe(row: ReturnType<typeof getBorrowerById>) {
+function toPublicBorrowerSafe(
+  row: Awaited<ReturnType<typeof getBorrowerById>>,
+) {
   if (!row) return null;
   return {
     id: row.id,

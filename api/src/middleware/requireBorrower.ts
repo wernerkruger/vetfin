@@ -1,8 +1,5 @@
 import type { Request, RequestHandler } from "express";
-import {
-  verifyBorrowerToken,
-  type BorrowerTokenPayload,
-} from "../auth/jwt.js";
+import { verifyBorrowerToken, type BorrowerTokenPayload } from "../auth/jwt.js";
 import { getBorrowerById } from "../db/borrowers.js";
 
 const AUTH_KEY = "borrowerAuth";
@@ -25,7 +22,7 @@ export const requireBorrowerAuth: RequestHandler = async (req, res, next) => {
   try {
     const token = header.slice(7);
     const payload = await verifyBorrowerToken(token);
-    const borrower = getBorrowerById(payload.sub);
+    const borrower = await getBorrowerById(payload.sub);
     if (!borrower) {
       res.status(401).json({ error: "Account not found" });
       return;

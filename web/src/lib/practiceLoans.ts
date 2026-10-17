@@ -6,6 +6,7 @@ const IN_PROGRESS = new Set([
   "profile_complete",
   "loan_details",
   "bank_linked",
+  "plan_selected",
   "started",
 ]);
 

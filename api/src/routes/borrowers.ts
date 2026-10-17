@@ -15,7 +15,10 @@ import {
   toPublicApplication,
 } from "../db/applications.js";
 import { getPracticeBySlug } from "../db/practices.js";
-import { getBorrowerAuth, requireBorrowerAuth } from "../middleware/requireBorrower.js";
+import {
+  getBorrowerAuth,
+  requireBorrowerAuth,
+} from "../middleware/requireBorrower.js";
 import {
   dateOfBirthField,
   emailField,
@@ -69,7 +72,7 @@ export function borrowersRouter(): Router {
   router.post("/signup", async (req, res, next) => {
     try {
       const body = signupBody.parse(req.body);
-      const practice = getPracticeBySlug(body.referralSlug);
+      const practice = await getPracticeBySlug(body.referralSlug);
       if (!practice) {
         res.status(404).json({ error: "Practice not found" });
         return;
@@ -84,7 +87,7 @@ export function borrowersRouter(): Router {
         referralSlug: practice.slug,
       });
 
-      const application = getOrCreateDraftApplication(
+      const application = await getOrCreateDraftApplication(
         borrower.id,
         practice.id,
         practice.slug,
@@ -112,7 +115,7 @@ export function borrowersRouter(): Router {
       res.json({
         token,
         borrower: toPublicBorrower(borrower),
-        applications: listApplicationsForBorrower(borrower.id),
+        applications: await listApplicationsForBorrower(borrower.id),
         redirectTo: mustChangePassword
           ? "/borrower/change-password"
           : "/borrower/dashboard",
@@ -123,10 +126,10 @@ export function borrowersRouter(): Router {
     }
   });
 
-  router.get("/me/dashboard", requireBorrowerAuth, (req, res, next) => {
+  router.get("/me/dashboard", requireBorrowerAuth, async (req, res, next) => {
     try {
       const customerId = getBorrowerAuth(req).sub;
-      const borrower = getBorrowerById(customerId);
+      const borrower = await getBorrowerById(customerId);
       if (!borrower) {
         res.status(404).json({ error: "Account not found" });
         return;
@@ -134,17 +137,17 @@ export function borrowersRouter(): Router {
 
       res.json({
         borrower: toPublicBorrower(borrower),
-        ...getBorrowerDashboard(customerId),
+        ...(await getBorrowerDashboard(customerId)),
       });
     } catch (err) {
       next(err);
     }
   });
 
-  router.get("/me", requireBorrowerAuth, (req, res, next) => {
+  router.get("/me", requireBorrowerAuth, async (req, res, next) => {
     try {
       const customerId = getBorrowerAuth(req).sub;
-      const borrower = getBorrowerById(customerId);
+      const borrower = await getBorrowerById(customerId);
       if (!borrower) {
         res.status(404).json({ error: "Account not found" });
         return;
@@ -152,33 +155,37 @@ export function borrowersRouter(): Router {
 
       res.json({
         borrower: toPublicBorrower(borrower),
-        applications: listApplicationsForBorrower(customerId),
+        applications: await listApplicationsForBorrower(customerId),
       });
     } catch (err) {
       next(err);
     }
   });
 
-  router.post("/me/change-password", requireBorrowerAuth, async (req, res, next) => {
-    try {
-      const customerId = getBorrowerAuth(req).sub;
-      const body = changePasswordBody.parse(req.body);
-      const borrower = await changeBorrowerPassword(
-        customerId,
-        body.currentPassword,
-        body.newPassword,
-      );
-      res.json({ borrower: toPublicBorrower(borrower) });
-    } catch (err) {
-      next(err);
-    }
-  });
+  router.post(
+    "/me/change-password",
+    requireBorrowerAuth,
+    async (req, res, next) => {
+      try {
+        const customerId = getBorrowerAuth(req).sub;
+        const body = changePasswordBody.parse(req.body);
+        const borrower = await changeBorrowerPassword(
+          customerId,
+          body.currentPassword,
+          body.newPassword,
+        );
+        res.json({ borrower: toPublicBorrower(borrower) });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
 
-  router.patch("/me/profile", requireBorrowerAuth, (req, res, next) => {
+  router.patch("/me/profile", requireBorrowerAuth, async (req, res, next) => {
     try {
       const customerId = getBorrowerAuth(req).sub;
       const body = profileBody.parse(req.body);
-      const borrower = updateBorrowerProfile(customerId, body);
+      const borrower = await updateBorrowerProfile(customerId, body);
       res.json({ borrower: toPublicBorrower(borrower) });
     } catch (err) {
       next(err);

@@ -23,12 +23,14 @@ export const APPLICATION_STATUSES = [
   "profile_complete",
   "loan_details",
   "bank_linked",
+  "plan_selected",
   "submitted",
   "approved",
   "active",
   "declined",
   "cancelled",
   "paid_off",
+  "written_off",
 ] as const;
 
 export const IN_PROGRESS_STATUSES = [
@@ -36,21 +38,29 @@ export const IN_PROGRESS_STATUSES = [
   "profile_complete",
   "loan_details",
   "bank_linked",
+  "plan_selected",
 ] as const;
 
-export const ACTIVE_LOAN_STATUSES = ["approved", "active", "paid_off"] as const;
+export const ACTIVE_LOAN_STATUSES = [
+  "approved",
+  "active",
+  "paid_off",
+  "written_off",
+] as const;
 
 export const STATUS_LABELS: Record<string, string> = {
   draft: "In progress",
   profile_complete: "In progress",
   loan_details: "In progress",
   bank_linked: "In progress",
+  plan_selected: "In progress",
   submitted: "Pending approval",
   approved: "Approved",
   active: "Active",
   declined: "Declined",
   cancelled: "Cancelled",
   paid_off: "Paid off",
+  written_off: "Written off",
 };
 
 export type ServiceType = (typeof SERVICE_TYPES)[number];
@@ -115,7 +125,5 @@ export function disbursementStatusLabel(
   status: string | null | undefined,
 ): string | null {
   if (!status) return null;
-  return (
-    DISBURSEMENT_STATUS_LABELS[status as DisbursementStatus] ?? status
-  );
+  return DISBURSEMENT_STATUS_LABELS[status as DisbursementStatus] ?? status;
 }
